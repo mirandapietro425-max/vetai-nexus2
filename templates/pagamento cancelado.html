@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Cancelado | VetAI Nexus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Outfit', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-xl w-full bg-white rounded-[3rem] p-12 shadow-2xl text-center">
+        <div class="w-24 h-24 mx-auto mb-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400 text-5xl">
+            <i class="fas fa-times"></i>
+        </div>
+        
+        <h1 class="text-4xl font-black mb-4">Pagamento Cancelado</h1>
+        <p class="text-lg text-slate-600 mb-8">Não se preocupe! Você pode continuar usando o plano gratuito ou tentar novamente quando quiser.</p>
+        
+        <div class="space-y-3">
+            <a href="/" class="block w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-12 py-4 rounded-2xl font-black text-lg shadow-lg hover:shadow-xl transition-all">
+                Voltar ao Dashboard
+            </a>
+            <button onclick="history.back()" class="block w-full text-slate-500 px-12 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all">
+                Voltar à Página Anterior
+            </button>
+        </div>
+        
+        <p class="mt-8 text-sm text-slate-400">Ainda tem 50 pontos gratuitos para usar! 🎉</p>
+    </div>
+</body>
+</html>

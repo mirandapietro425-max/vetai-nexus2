@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VetAI Nexus | Intelligence & Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+        
+        :root {
+            --brand: #7c3aed;
+            --brand-dark: #5b21b6;
+            --surface: #ffffff;
+            --bg: #f8fafc;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: #1e293b;
+            scroll-behavior: smooth;
+        }
+
+        .neo-card {
+            background: var(--surface);
+            border: 1px solid rgba(124, 58, 237, 0.1);
+            border-radius: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-gradient:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(124, 58, 237, 0.4);
+        }
+
+        .pet-photo-preview {
+            width: 120px;
+            height: 120px;
+            border-radius: 2rem;
+            object-fit: cover;
+            border: 3px solid #7c3aed;
+        }
+
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .nav-btn.active {
+            background-color: #f5f3ff;
+            color: #7c3aed;
+        }
+
+        .loading-shimmer {
+            background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .pulse-urgent {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .markdown-content h1, .markdown-content h2 { font-weight: 800; font-size: 1.25rem; margin-bottom: 0.5rem; color: #4338ca; }
+        .markdown-content p { margin-bottom: 0.75rem; }
+        .markdown-content strong { color: #1e1b4b; }
+
+        .premium-shine {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+    </style>
+</head>
+<body class="overflow-x-hidden">
+
+    <!-- LANDING PAGE -->
+    <div id="view-landing" class="min-h-screen bg-white">
+        <nav class="fixed top-0 w-full z-50 bg-white/80 backdrop-blur-md px-8 py-4 flex justify-between items-center border-b">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center text-white"><i class="fas fa-paw"></i></div>
+                <span class="font-black text-xl tracking-tighter uppercase">VetAI Nexus</span>
+            </div>
+            <button onclick="showView('login')" class="btn-gradient text-white px-6 py-2 rounded-full font-bold">Entrar</button>
+        </nav>
+
+        <main class="pt-40 px-8 max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+            <div class="space-y-8 text-center lg:text-left">
+                <div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-bold text-sm">
+                    <span class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+                    </span>
+                    Nova IA Generativa Nexus v2.5
+                </div>
+                <h1 class="text-6xl font-black tracking-tighter leading-none">Cuide do seu pet com <span class="text-purple-600">Inteligência</span>.</h1>
+                <p class="text-xl text-slate-500 font-medium">Controle a alimentação, monitore a saúde e use IA para entender as necessidades reais do seu melhor amigo.</p>
+                <div class="flex flex-wrap gap-4 justify-center lg:justify-start">
+                    <button onclick="showView('register')" class="btn-gradient text-white px-10 py-5 rounded-3xl font-black text-lg shadow-2xl">Começar Grátis</button>
+                    <button onclick="showView('login')" class="px-10 py-5 rounded-3xl font-black text-lg border-2 border-slate-100 hover:bg-slate-50 transition-colors">Já tenho conta</button>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="absolute -top-10 -left-10 w-40 h-40 bg-purple-200 rounded-full blur-3xl opacity-50"></div>
+                <img src="https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=800" class="relative rounded-[3rem] shadow-2xl z-10" alt="Pet care">
+                <div class="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-xl z-20 neo-card">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center"><i class="fas fa-check"></i></div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase">Saúde do Pet</p>
+                            <p class="font-black">Excelente</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- REGISTER VIEW -->
+    <div id="view-register" class="hidden min-h-screen flex items-center justify-center p-6 bg-slate-50">
+        <div class="neo-card w-full max-w-md p-10 shadow-2xl bg-white">
+            <h2 class="text-3xl font-black mb-2 text-slate-900">Criar Conta</h2>
+            <p class="text-slate-500 mb-8 font-medium">Comece com 50 pontos gratuitos!</p>
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-400 ml-2">Nome</label>
+                    <input type="text" id="register-name" placeholder="Seu nome" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-400 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-400 ml-2">E-mail</label>
+                    <input type="email" id="register-email" placeholder="nome@exemplo.com" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-400 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-400 ml-2">Senha</label>
+                    <input type="password" id="register-password" placeholder="••••••••" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-400 transition-all">
+                </div>
+            </div>
+            <button onclick="handleRegister()" class="w-full btn-gradient text-white py-4 rounded-2xl font-black text-lg shadow-lg">Criar Conta Grátis</button>
+            <button onclick="showView('login')" class="w-full mt-4 text-slate-400 font-bold hover:text-purple-500 transition-all">Já tenho conta</button>
+        </div>
+    </div>
+
+    <!-- LOGIN VIEW -->
+    <div id="view-login" class="hidden min-h-screen flex items-center justify-center p-6 bg-slate-50">
+        <div class="neo-card w-full max-w-md p-10 shadow-2xl bg-white">
+            <h2 class="text-3xl font-black mb-2 text-slate-900">Acesse sua conta</h2>
+            <p class="text-slate-500 mb-8 font-medium">Bem-vindo de volta ao ecossistema Nexus.</p>
+            <div class="space-y-4 mb-8">
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-400 ml-2">E-mail</label>
+                    <input type="email" id="login-email" placeholder="nome@exemplo.com" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-400 transition-all">
+                </div>
+                <div>
+                    <label class="text-xs font-bold uppercase text-slate-400 ml-2">Senha</label>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-400 transition-all">
+                </div>
+            </div>
+            <button onclick="handleLogin()" class="w-full btn-gradient text-white py-4 rounded-2xl font-black text-lg shadow-lg">Entrar no Dashboard</button>
+            <button onclick="showView('register')" class="w-full mt-4 text-slate-400 font-bold hover:text-purple-500 transition-all">Criar nova conta</button>
+            <button onclick="showView('landing')" class="w-full mt-2 text-slate-300 font-bold hover:text-slate-400 transition-all text-sm">Voltar ao início</button>
+        </div>
+    </div>
+
+    <!-- DASHBOARD TUTOR -->
+    <div id="view-tutor-dash" class="hidden h-screen flex overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-20 lg:w-72 bg-white border-r border-slate-100 flex flex-col p-4 lg:p-6 transition-all">
+            <div class="flex items-center gap-3 mb-12 ml-2">
+                <div class="w-10 h-10 btn-gradient rounded-xl flex items-center justify-center text-white shrink-0"><i class="fas fa-bone"></i></div>
+                <span class="font-black text-xl lg:block hidden tracking-tighter">NEXUS</span>
+            </div>
+            
+            <!-- POINTS DISPLAY -->
+            <div id="points-card" class="hidden lg:block mb-6 p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-indigo-50 border border-purple-100">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-black uppercase text-purple-600">Seus Pontos</span>
+                    <i class="fas fa-coins text-purple-500"></i>
+                </div>
+                <div class="text-3xl font-black text-purple-700" id="points-display">50</div>
+                <div class="text-xs text-purple-500 font-bold mt-1">5 pontos por consulta IA</div>
+                <button onclick="showPremiumModal()" class="w-full mt-3 bg-gradient-to-r from-amber-400 to-orange-500 text-white px-4 py-2 rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all premium-shine">
+                    <i class="fas fa-crown mr-2"></i>Upgrade Premium
+                </button>
+            </div>
+
+            <!-- PREMIUM BADGE -->
+            <div id="premium-badge" class="hidden lg:block mb-6 p-4 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-lg premium-shine">
+                <div class="flex items-center gap-3 mb-2">
+                    <i class="fas fa-crown text-2xl"></i>
+                    <span class="font-black text-lg">PREMIUM</span>
+                </div>
+                <p class="text-xs opacity-90">Acesso ilimitado ativado</p>
+            </div>
+            
+            <nav class="flex-1 space-y-2">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="nav-btn active w-full flex items-center gap-4 p-4 rounded-2xl font-bold transition-all"><i class="fas fa-th-large"></i> <span class="lg:block hidden">Dashboard</span></button>
+                <button onclick="switchTab('vaccines')" id="tab-vaccines" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-slate-50 font-bold transition-all"><i class="fas fa-syringe"></i> <span class="lg:block hidden">Vacinação</span></button>
+                <button onclick="switchTab('nutriscan')" id="tab-nutriscan" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-slate-50 font-bold transition-all"><i class="fas fa-barcode"></i> <span class="lg:block hidden">NutriScan</span></button>
+                <button onclick="switchTab('curiosities')" id="tab-curiosities" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-slate-50 font-bold transition-all"><i class="fas fa-book-open"></i> <span class="lg:block hidden">Curiosidades</span></button>
+                <button onclick="switchTab('consultation')" id="tab-consultation" class="nav-btn w-full flex items-center gap-4 p-4 rounded-2xl text-slate-400 hover:bg-slate-50 font-bold transition-all"><i class="fas fa-stethoscope"></i> <span class="lg:block hidden">Triagem IA</span></button>
+            </nav>
+            <button onclick="handleLogout()" class="p-4 text-red-400 hover:bg-red-50 rounded-2xl transition-all font-bold flex items-center gap-4 mt-auto"><i class="fas fa-sign-out-alt"></i> <span class="lg:block hidden">Sair</span></button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 bg-slate-50 overflow-y-auto p-4 lg:p-10 custom-scroll relative">
+            
+            <div id="content-dashboard" class="tab-content">
+                <header class="flex justify-between items-center mb-10">
+                    <div>
+                        <h2 class="text-3xl font-black">Olá, <span id="user-name-display">Tutor</span>!</h2>
+                        <p class="text-slate-500 font-medium">Aqui está o status do seu melhor amigo.</p>
+                    </div>
+                </header>
+
+                <div id="tutor-empty-state" class="flex flex-col items-center justify-center py-20 text-center neo-card bg-white mx-auto max-w-2xl">
+                    <div class="w-32 h-32 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-5xl mb-6"><i class="fas fa-plus"></i></div>
+                    <h3 class="text-2xl font-black mb-2">Seu pet ainda não está aqui</h3>
+                    <p class="text-slate-500 px-10 mb-6">Cadastre seu bichinho para começar a monitorar a saúde e usar as ferramentas de IA.</p>
+                    <button onclick="toggleModal('pet-modal', true)" class="btn-gradient text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Cadastrar meu Bichinho</button>
+                </div>
+
+                <div id="tutor-active-state" class="hidden space-y-8 animate-in fade-in duration-500">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="neo-card p-6 flex items-center gap-6 bg-white">
+                            <img id="active-pet-img" class="pet-photo-preview bg-slate-100" src="">
+                            <div>
+                                <h4 class="text-2xl font-black"><span id="active-pet-name">---</span></h4>
+                                <p id="active-pet-info" class="text-slate-400 font-bold text-sm">---</p>
+                                <span id="active-pet-weight-display" class="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-black mt-2 uppercase">Peso: --kg</span>
+                            </div>
+                        </div>
+                        <div class="neo-card p-6 bg-emerald-50 border-emerald-100 flex flex-col justify-center">
+                            <h4 class="text-xl font-black text-emerald-800">Alimentação</h4>
+                            <p id="meal-count-text" class="text-sm text-emerald-700 font-medium mt-1">Refeições hoje: 0</p>
+                            <button onclick="addMeal()" class="mt-4 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-xl w-fit font-bold transition-all shadow-md">Registrar Refeição</button>
+                        </div>
+                        <div class="neo-card p-6 bg-blue-50 border-blue-100 flex flex-col justify-center">
+                            <h4 class="text-xl font-black text-blue-800">Próxima Vacina</h4>
+                            <p class="text-sm text-blue-700 font-medium mt-1">V10 - Reforço anual</p>
+                            <p class="text-xs font-bold text-blue-400 mt-2">Em 14 dias</p>
+                        </div>
+                    </div>
+                    <div class="neo-card p-8 bg-white h-[400px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-black text-xl">Frequência Alimentar</h3>
+                            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Últimos 7 dias</div>
+                        </div>
+                        <div class="h-[300px]">
+                            <canvas id="feedingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-nutriscan" class="tab-content hidden animate-in slide-in-from-right duration-300">
+                <h2 class="text-4xl font-black mb-8">NutriScan IA <span class="text-lg font-bold text-purple-400">beta</span></h2>
+                <div class="grid lg:grid-cols-2 gap-8">
+                    <div class="neo-card p-8 bg-white space-y-4">
+                        <label class="font-bold text-sm text-slate-400 uppercase">1. Atualizar Peso Atual (kg)</label>
+                        <input type="number" id="scan-weight" class="w-full p-4 bg-slate-50 border rounded-2xl focus:ring-2 ring-purple-200 outline-none" placeholder="Ex: 5.2">
+                        <button onclick="updateWeight()" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Salvar Peso</button>
+                    </div>
+                    <div class="neo-card p-8 bg-white space-y-4">
+                        <label class="font-bold text-sm text-slate-400 uppercase">2. Tabela Nutricional da Ração</label>
+                        <div id="drop-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-purple-300 transition-all cursor-pointer" onclick="document.getElementById('kibble-upload').click()">
+                            <i class="fas fa-file-invoice text-3xl text-slate-300 mb-2"></i>
+                            <p class="text-slate-400 font-bold text-sm">Clique para subir a foto do verso da embalagem</p>
+                            <img id="kibble-preview" class="hidden mt-4 mx-auto max-h-40 rounded-lg shadow-md">
+                        </div>
+                        <input type="file" id="kibble-upload" accept="image/*" class="hidden" onchange="previewKibble(this)">
+                        <button onclick="analyzeKibble()" id="btn-analyze-kibble" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Analisar com IA (5 pontos)</button>
+                    </div>
+                </div>
+                <div id="nutri-result" class="hidden mt-8 p-8 neo-card bg-indigo-50 border-indigo-200">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center"><i class="fas fa-robot"></i></div>
+                        <h3 class="font-black text-xl text-indigo-900">Recomendação Nexus</h3>
+                    </div>
+                    <div id="nutri-text" class="text-indigo-900 leading-relaxed markdown-content"></div>
+                </div>
+            </div>
+
+            <div id="content-curiosities" class="tab-content hidden animate-in slide-in-from-right duration-300">
+                <h2 class="text-4xl font-black mb-8">Curiosidades da Raça</h2>
+                <div id="curiosity-box" class="neo-card p-10 bg-white min-h-[400px]">
+                    <div id="curiosity-loading" class="hidden space-y-4">
+                        <div class="h-8 w-1/2 loading-shimmer rounded-lg"></div>
+                        <div class="h-24 w-full loading-shimmer rounded-lg"></div>
+                        <div class="h-10 w-1/3 loading-shimmer rounded-lg"></div>
+                    </div>
+                    <div id="curiosity-data" class="space-y-6 markdown-content">
+                        <p class="text-slate-400 font-medium">Cadastre seu pet para descobrir a história e os segredos da sua raça.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-consultation" class="tab-content hidden animate-in slide-in-from-right duration-300">
+                <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-8 gap-4">
+                    <h2 class="text-4xl font-black">Triagem IA</h2>
+                    <div class="flex gap-2">
+                        <span class="px-4 py-2 bg-purple-100 text-purple-600 rounded-full font-bold text-xs uppercase">Processador: Gemini 2.5 Flash</span>
+                    </div>
+                </div>
+                <div class="grid lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3 space-y-6">
+                        <div class="neo-card p-8 bg-white shadow-sm border-slate-100">
+                            <h3 class="font-bold mb-4">O que está acontecendo?</h3>
+                            <textarea id="ai-symptoms" class="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl h-48 focus:border-purple-300 outline-none transition-all resize-none" placeholder="Ex: Meu pet está mancando da pata traseira esquerda desde hoje cedo e parece sem apetite..."></textarea>
+                            <button onclick="runConsultation()" id="btn-consult" class="w-full btn-gradient text-white py-5 rounded-2xl font-black text-lg mt-6 shadow-xl flex items-center justify-center gap-3">
+                                <i class="fas fa-microchip"></i> Iniciar Análise Nexus (5 pontos)
+                            </button>
+                        </div>
+                        <div id="ai-result" class="hidden p-8 neo-card bg-white border-slate-100 shadow-sm transition-all duration-500">
+                            <div id="urgency-badge" class="inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4"></div>
+                            <div id="consult-text" class="text-slate-700 leading-relaxed markdown-content"></div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="neo-card p-6 bg-purple-600 text-white">
+                            <h4 class="font-black text-lg mb-2"><i class="fas fa-info-circle mr-2"></i>Como funciona</h4>
+                            <p class="text-sm opacity-90 leading-relaxed">Nossa IA analisa os sintomas baseada em protocolos veterinários mundiais para indicar o nível de prioridade e preparar você para a consulta.</p>
+                        </div>
+                        <div class="neo-card p-6 bg-red-50 border-red-100">
+                            <h4 class="font-black text-red-800 text-lg mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Atenção</h4>
+                            <p class="text-sm text-red-700 opacity-90">A triagem IA não substitui um médico veterinário. Em casos de convulsão, sangramento severo ou dificuldade respiratória, vá para uma emergência imediatamente.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-vaccines" class="tab-content hidden">
+                 <h2 class="text-4xl font-black mb-8">Cartão de Vacinação</h2>
+                 <div class="grid gap-4">
+                    <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 border-emerald-500 shadow-sm">
+                        <div>
+                            <h4 class="font-black">Anti-rábica</h4>
+                            <p class="text-sm text-slate-400 font-bold">Dose: 20/02/2024</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-xs font-black uppercase">Aplicada</span>
+                            <i class="fas fa-check-circle text-emerald-500"></i>
+                        </div>
+                    </div>
+                    <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 border-amber-500 shadow-sm">
+                        <div>
+                            <h4 class="font-black text-slate-800">V10 (Quíntupla)</h4>
+                            <p class="text-sm text-slate-400 font-bold">Agendada: 25/01/2025</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="bg-amber-100 text-amber-600 px-3 py-1 rounded-full text-xs font-black uppercase">Pendente</span>
+                            <button class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><i class="fas fa-bell"></i></button>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL CADASTRAR PET -->
+    <div id="pet-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in duration-200">
+            <h3 class="text-2xl font-black mb-6 text-center">Perfil do Pet</h3>
+            <div class="space-y-4">
+                <div class="flex flex-col items-center mb-4">
+                    <label class="cursor-pointer group relative">
+                        <div id="photo-box" class="w-32 h-32 bg-slate-100 rounded-3xl flex items-center justify-center border-2 border-dashed border-slate-300 overflow-hidden group-hover:border-purple-400 transition-all">
+                            <i class="fas fa-camera text-slate-300 text-2xl" id="cam-icon"></i>
+                            <img id="upload-preview" class="hidden w-full h-full object-cover">
+                        </div>
+                        <div class="absolute -bottom-2 -right-2 w-8 h-8 btn-gradient text-white rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-plus text-xs"></i></div>
+                        <input type="file" id="pet-photo-upload" class="hidden" onchange="handlePetPhoto(this)">
+                    </label>
+                    <div id="breed-loader" class="hidden mt-4 px-4 py-1 bg-purple-100 text-purple-700 rounded-full text-[10px] font-black animate-pulse uppercase">IA: Analisando traços...</div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Nome</label>
+                    <input type="text" id="new-pet-name" placeholder="Ex: Thor" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-300">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Espécie</label>
+                        <select id="new-pet-type" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none appearance-none">
+                            <option value="Cachorro">Cachorro</option>
+                            <option value="Gato">Gato</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Peso Inicial (kg)</label>
+                        <input type="number" id="new-pet-weight" placeholder="0.0" step="0.1" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-300">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Raça</label>
+                    <input type="text" id="new-pet-breed" placeholder="Identificada pela IA ou manual" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-300">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="toggleModal('pet-modal', false)" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Cancelar</button>
+                <button onclick="savePet()" class="flex-1 btn-gradient text-white py-4 rounded-2xl font-black shadow-lg">Finalizar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PREMIUM MODAL -->
+    <div id="premium-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in duration-200">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto mb-4 premium-shine rounded-full flex items-center justify-center text-white text-3xl">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <h3 class="text-4xl font-black mb-2">VetAI Nexus Premium</h3>
+                <p class="text-slate-500 font-medium">Acesso ilimitado a todas as funcionalidades de IA</p>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                    <i class="fas fa-infinity text-3xl text-purple-600 mb-3"></i>
+                    <h4 class="font-black mb-2">Consultas Ilimitadas</h4>
+                    <p class="text-sm text-slate-600">Use a IA quantas vezes quiser sem se preocupar com pontos</p>
+                </div>
+                <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                    <i class="fas fa-robot text-3xl text-purple-600 mb-3"></i>
+                    <h4 class="font-black mb-2">IA Avançada</h4>
+                    <p class="text-sm text-slate-600">Acesso prioritário aos modelos mais recentes</p>
+                </div>
+                <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                    <i class="fas fa-headset text-3xl text-purple-600 mb-3"></i>
+                    <h4 class="font-black mb-2">Suporte Priority</h4>
+                    <p class="text-sm text-slate-600">Atendimento prioritário via chat e email</p>
+                </div>
+                <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                    <i class="fas fa-chart-line text-3xl text-purple-600 mb-3"></i>
+                    <h4 class="font-black mb-2">Análises Detalhadas</h4>
+                    <p class="text-sm text-slate-600">Relatórios completos sobre a saúde do seu pet</p>
+                </div>
+            </div>
+
+            <div class="text-center p-8 rounded-3xl bg-gradient-to-br from-purple-600 to-indigo-600 text-white mb-6">
+                <div class="text-5xl font-black mb-2">R$ 29,90<span class="text-2xl font-normal">/mês</span></div>
+                <p class="text-purple-100">Cancele quando quiser • Sem compromisso</p>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="toggleModal('premium-modal', false)" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Talvez depois</button>
+                <button onclick="initPremiumCheckout()" id="btn-premium-checkout" class="flex-1 premium-shine text-white py-4 rounded-2xl font-black shadow-lg">
+                    <i class="fas fa-crown mr-2"></i>Assinar Premium
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-2xl z-[200] opacity-0 transition-all pointer-events-none transform translate-y-10"></div>
+
+    <script>
+        let currentUser = null;
+        let currentPet = { 
+            name: "", 
+            breed: "", 
+            type: "Cachorro", 
+            weight: 0, 
+            photo: null, 
+            meals: [2, 1, 3, 2, 2, 3, 0] 
+        };
+        let kibbleImage = null;
+        let feedingChart = null;
+
+        // --- Core UI Functions ---
+
+        function showView(id) {
+            document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
+            document.getElementById('view-' + id).classList.remove('hidden');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('active', 'text-purple-600');
+                b.classList.add('text-slate-400');
+            });
+            
+            const activeBtn = document.getElementById('tab-' + tabId);
+            activeBtn.classList.add('active', 'text-purple-600');
+            activeBtn.classList.remove('text-slate-400');
+            
+            if(tabId === 'curiosities' && currentPet.breed) loadCuriosities();
+            if(tabId === 'dashboard' && currentPet.name) {
+                setTimeout(initChart, 100);
+            }
+        }
+
+        function toggleModal(id, show) {
+            const m = document.getElementById(id);
+            m.classList.toggle('hidden', !show);
+            m.classList.toggle('flex', show);
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.style.backgroundColor = isError ? '#ef4444' : '#0f172a';
+            t.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => t.classList.add('opacity-0', 'translate-y-10'), 3000);
+        }
+
+        function showPremiumModal() {
+            if (currentUser && currentUser.is_premium) {
+                showToast('Você já é Premium! 👑');
+                return;
+            }
+            toggleModal('premium-modal', true);
+        }
+
+        function updateUserUI() {
+            if (!currentUser) return;
+            
+            document.getElementById('user-name-display').innerText = currentUser.name || 'Tutor';
+            document.getElementById('points-display').innerText = currentUser.points;
+            
+            if (currentUser.is_premium) {
+                document.getElementById('points-card').classList.add('hidden');
+                document.getElementById('premium-badge').classList.remove('hidden');
+            } else {
+                document.getElementById('points-card').classList.remove('hidden');
+                document.getElementById('premium-badge').classList.add('hidden');
+            }
+        }
+
+        // --- Authentication ---
+
+        async function handleRegister() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            if (!email || !password) {
+                showToast('Preencha todos os campos!', true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showToast(data.error || 'Erro no cadastro', true);
+                    return;
+                }
+
+                currentUser = data.user;
+                updateUserUI();
+                showView('tutor-dash');
+                showToast('✨ Conta criada! Você ganhou 50 pontos!');
+            } catch (error) {
+                showToast('Erro ao conectar com servidor', true);
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showToast('Preencha email e senha!', true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showToast(data.error || 'Erro no login', true);
+                    return;
+                }
+
+                currentUser = data.user;
+                updateUserUI();
+                showView('tutor-dash');
+                showToast('Bem-vindo de volta!');
+                loadUserPets();
+            } catch (error) {
+                showToast('Erro ao conectar com servidor', true);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                currentUser = null;
+                currentPet = { name: "", breed: "", type: "Cachorro", weight: 0, photo: null, meals: [2, 1, 3, 2, 2, 3, 0] };
+                showView('landing');
+                showToast('Até logo!');
+            } catch (error) {
+                showToast('Erro ao deslogar', true);
+            }
+        }
+
+        // --- API Calls ---
+
+        async function callGemini(prompt, image = null) {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, image })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (data.upgrade_required) {
+                        showToast(`Você precisa de ${data.points_needed} pontos (tem ${data.points_available})`, true);
+                        setTimeout(() => showPremiumModal(), 500);
+                        return null;
+                    }
+                    throw new Error(data.error);
+                }
+                
+                // Atualiza pontos no UI
+                if (currentUser) {
+                    currentUser.points = data.points_remaining;
+                    updateUserUI();
+                }
+                
+                return data.result;
+            } catch (error) {
+                showToast('Erro na chamada da IA: ' + error.message, true);
+                return null;
+            }
+        }
+
+        // --- Pet Functions ---
+
+        async function loadUserPets() {
+            try {
+                const response = await fetch('/api/pets');
+                const pets = await response.json();
+                
+                if (pets.length > 0) {
+                    const pet = pets[0];
+                    currentPet.name = pet.name;
+                    currentPet.breed = pet.breed;
+                    currentPet.type = pet.type;
+                    currentPet.weight = pet.weight;
+                    currentPet.photo = pet.photo_url;
+                    
+                    document.getElementById('tutor-empty-state').classList.add('hidden');
+                    document.getElementById('tutor-active-state').classList.remove('hidden');
+                    
+                    document.getElementById('active-pet-name').innerText = currentPet.name;
+                    document.getElementById('active-pet-info').innerText = `${currentPet.type} • ${currentPet.breed}`;
+                    document.getElementById('active-pet-weight-display').innerText = `Peso: ${currentPet.weight}kg`;
+                    document.getElementById('active-pet-img').src = currentPet.photo || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
+                    
+                    initChart();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar pets:', error);
+            }
+        }
+
+        async function handlePetPhoto(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const base64 = e.target.result.split(',')[1];
+                    const preview = document.getElementById('upload-preview');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    document.getElementById('cam-icon').classList.add('hidden');
+                    currentPet.photo = e.target.result;
+
+                    document.getElementById('breed-loader').classList.remove('hidden');
+                    const breedPrompt = "Seja direto. Analise esta foto e identifique apenas a raça predominante do pet. Responda apenas o nome da raça.";
+                    const detectedBreed = await callGemini(breedPrompt, base64);
+                    
+                    if (detectedBreed) {
+                        document.getElementById('new-pet-breed').value = detectedBreed.replace(/[#*]/g, '').trim();
+                        showToast("IA identificou a raça!");
+                    }
+                    document.getElementById('breed-loader').classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function savePet() {
+            const name = document.getElementById('new-pet-name').value;
+            const breed = document.getElementById('new-pet-breed').value;
+            const weight = document.getElementById('new-pet-weight').value;
+            const type = document.getElementById('new-pet-type').value;
+
+            if(!name || !weight) {
+                showToast("Nome e peso são obrigatórios!", true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/pets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        breed: breed || "Raça indefinida",
+                        type,
+                        weight: parseFloat(weight),
+                        photo_url: currentPet.photo
+                    })
+                });
+
+                if (!response.ok) throw new Error('Erro ao salvar pet');
+
+                currentPet.name = name;
+                currentPet.breed = breed || "Raça indefinida";
+                currentPet.weight = parseFloat(weight);
+                currentPet.type = type;
+
+                document.getElementById('tutor-empty-state').classList.add('hidden');
+                document.getElementById('tutor-active-state').classList.remove('hidden');
+                
+                document.getElementById('active-pet-name').innerText = currentPet.name;
+                document.getElementById('active-pet-info').innerText = `${currentPet.type} • ${currentPet.breed}`;
+                document.getElementById('active-pet-weight-display').innerText = `Peso: ${currentPet.weight}kg`;
+                document.getElementById('active-pet-img').src = currentPet.photo || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
+                
+                toggleModal('pet-modal', false);
+                showToast("Perfil criado no Nexus!");
+                initChart();
+            } catch (error) {
+                showToast('Erro ao salvar pet', true);
+            }
+        }
+
+        // --- Features ---
+
+        function initChart() {
+            const ctx = document.getElementById('feedingChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            if(feedingChart) feedingChart.destroy();
+            
+            feedingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Hoje'],
+                    datasets: [{
+                        label: 'Refeições',
+                        data: currentPet.meals,
+                        borderColor: '#7c3aed',
+                        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 4,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#7c3aed'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { stepSize: 1 } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function addMeal() {
+            currentPet.meals[6]++;
+            document.getElementById('meal-count-text').innerText = `Refeições hoje: ${currentPet.meals[6]}`;
+            if(feedingChart) {
+                feedingChart.data.datasets[0].data = currentPet.meals;
+                feedingChart.update();
+            }
+            showToast("Refeição registrada!");
+        }
+
+        function updateWeight() {
+            const w = document.getElementById('scan-weight').value;
+            if(w) {
+                currentPet.weight = parseFloat(w);
+                document.getElementById('active-pet-weight-display').innerText = `Peso: ${w}kg`;
+                showToast("Peso atualizado!");
+            }
+        }
+
+        function previewKibble(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    kibbleImage = e.target.result.split(',')[1];
+                    const prev = document.getElementById('kibble-preview');
+                    prev.src = e.target.result;
+                    prev.classList.remove('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function analyzeKibble() {
+            if(!kibbleImage) {
+                showToast("Envie a foto do rótulo!", true);
+                return;
+            }
+            
+            const btn = document.getElementById('btn-analyze-kibble');
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Processando...';
+            btn.disabled = true;
+
+            const prompt = `Analise este rótulo de ração. O pet é um ${currentPet.type} ${currentPet.breed} que pesa ${currentPet.weight}kg. 
+            Baseado na tabela nutricional da imagem, calcule a gramatura diária ideal dividida em refeições. 
+            Formate com subtítulos em negrito e destaque os benefícios dos ingredientes encontrados.`;
+
+            const result = await callGemini(prompt, kibbleImage);
+            
+            if (result) {
+                document.getElementById('nutri-result').classList.remove('hidden');
+                document.getElementById('nutri-text').innerHTML = parseMarkdown(result);
+            }
+            
+            btn.innerHTML = 'Analisar com IA (5 pontos)';
+            btn.disabled = false;
+        }
+
+        async function loadCuriosities() {
+            const box = document.getElementById('curiosity-data');
+            const loader = document.getElementById('curiosity-loading');
+            
+            box.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            const prompt = `Gere 3 curiosidades fascinantes e pouco conhecidas sobre a raça ${currentPet.breed} (${currentPet.type}). 
+            Inclua uma dica de comportamento específica. Use ícones emoji e tom amigável.`;
+            
+            const result = await callGemini(prompt);
+            
+            if (result) {
+                box.innerHTML = parseMarkdown(result);
+            }
+            
+            loader.classList.add('hidden');
+            box.classList.remove('hidden');
+        }
+
+        async function runConsultation() {
+            const symptoms = document.getElementById('ai-symptoms').value;
+            if(!symptoms) {
+                showToast("Descreva o que seu pet sente.", true);
+                return;
+            }
+
+            const btn = document.getElementById('btn-consult');
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Analisando Quadro Clínico...';
+            btn.disabled = true;
+
+            const prompt = `Aja como um auxiliar veterinário avançado. O tutor relata: "${symptoms}". O pet é um ${currentPet.type} ${currentPet.breed}. 
+            Analise possíveis causas (sem dar diagnóstico final), defina o Nível de Urgência (Baixo, Médio, Alto, Crítico) e sugira perguntas para o tutor fazer ao veterinário real. 
+            Inicie a resposta com "URGÊNCIA: [NIVEL]"`;
+
+            const result = await callGemini(prompt);
+            
+            if (result) {
+                const resultDiv = document.getElementById('ai-result');
+                const badge = document.getElementById('urgency-badge');
+                
+                resultDiv.classList.remove('hidden');
+                
+                if(result.includes('Crítico') || result.includes('Alto')) {
+                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-red-100 text-red-600 pulse-urgent";
+                    badge.innerText = "🚨 Urgência Elevada";
+                } else {
+                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-blue-100 text-blue-600";
+                    badge.innerText = "ℹ️ Triagem Informativa";
+                }
+
+                document.getElementById('consult-text').innerHTML = parseMarkdown(result);
+                resultDiv.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            btn.innerHTML = '<i class="fas fa-microchip"></i> Iniciar Análise Nexus (5 pontos)';
+            btn.disabled = false;
+        }
+
+        // --- Premium/Stripe ---
+
+        async function initPremiumCheckout() {
+            const btn = document.getElementById('btn-premium-checkout');
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Preparando...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/stripe/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error);
+                }
+
+                window.location.href = data.checkout_url;
+            } catch (error) {
+                showToast('Erro ao processar pagamento: ' + error.message, true);
+                btn.innerHTML = '<i class="fas fa-crown mr-2"></i>Assinar Premium';
+                btn.disabled = false;
+            }
+        }
+
+        // --- Helper: Simple Markdown Parser ---
+        function parseMarkdown(text) {
+            return text
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                .replace(/\n/gim, '<br>');
+        }
+
+        // Initialize
+        window.onload = () => {
+            console.log("Nexus Ecosystem Online");
+        };
+    </script>
+</body>
+</html>

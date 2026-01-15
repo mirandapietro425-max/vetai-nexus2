@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento Confirmado! | VetAI Nexus</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+        body { font-family: 'Outfit', sans-serif; }
+        .premium-shine {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+            animation: shine 2s infinite;
+        }
+        @keyframes shine {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-2xl w-full bg-white rounded-[3rem] p-12 shadow-2xl text-center">
+        <div class="w-32 h-32 mx-auto mb-8 premium-shine rounded-full flex items-center justify-center text-white text-6xl">
+            <i class="fas fa-crown"></i>
+        </div>
+        
+        <h1 class="text-5xl font-black mb-4">Bem-vindo ao Premium!</h1>
+        <p class="text-xl text-slate-600 mb-8">Sua assinatura foi ativada com sucesso. Agora você tem acesso ilimitado a todas as funcionalidades de IA.</p>
+        
+        <div class="grid grid-cols-2 gap-4 mb-10">
+            <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                <i class="fas fa-infinity text-4xl text-purple-600 mb-3"></i>
+                <h3 class="font-black">Consultas Ilimitadas</h3>
+            </div>
+            <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                <i class="fas fa-robot text-4xl text-purple-600 mb-3"></i>
+                <h3 class="font-black">IA Avançada</h3>
+            </div>
+            <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                <i class="fas fa-headset text-4xl text-purple-600 mb-3"></i>
+                <h3 class="font-black">Suporte Priority</h3>
+            </div>
+            <div class="p-6 rounded-2xl bg-purple-50 border border-purple-100">
+                <i class="fas fa-chart-line text-4xl text-purple-600 mb-3"></i>
+                <h3 class="font-black">Análises Detalhadas</h3>
+            </div>
+        </div>
+        
+        <a href="/" class="inline-block bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-12 py-5 rounded-3xl font-black text-lg shadow-xl hover:shadow-2xl transition-all">
+            Começar a Usar Agora
+        </a>
+        
+        <p class="mt-8 text-sm text-slate-400">Um email de confirmação foi enviado para você com os detalhes da assinatura.</p>
+    </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
-# ========================================
 venv/
 __pycache__/
 *.pyc
 .env
 vetai.db
 *.db
+.DS_Store

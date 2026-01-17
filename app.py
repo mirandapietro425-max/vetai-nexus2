@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
-from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 from datetime import datetime, timedelta
@@ -11,7 +11,6 @@ import hashlib
 import requests
 import stripe
 
-# Carrega variáveis de ambiente
 load_dotenv()
 
 app = Flask(__name__)
@@ -25,7 +24,6 @@ STRIPE_PUBLISHABLE_KEY = os.environ.get("STRIPE_PUBLISHABLE_KEY")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET")
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
-# Validação crítica
 if not GEMINI_API_KEY:
     print("❌ ERRO CRÍTICO: GEMINI_API_KEY não configurada!")
 else:
@@ -39,9 +37,8 @@ else:
 # Configuração PostgreSQL
 if not DATABASE_URL:
     print("❌ ERRO: DATABASE_URL não configurada!")
-    DATABASE_URL = "sqlite:///vetai.db"  # Fallback para desenvolvimento
+    DATABASE_URL = "sqlite:///vetai.db"
 else:
-    # Render usa postgres://, SQLAlchemy precisa postgresql://
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
@@ -49,7 +46,6 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 db_session = scoped_session(sessionmaker(bind=engine))
 Base = declarative_base()
 
-# Configuração de Pontos
 FREE_POINTS = int(os.environ.get("FREE_POINTS", 50))
 POINTS_PER_AI_CALL = int(os.environ.get("POINTS_PER_AI_CALL", 5))
 
@@ -68,8 +64,8 @@ class User(Base):
     subscription_end = Column(DateTime)
     created_at = Column(DateTime, default=datetime.utcnow)
     
-    pets = relationship("Pet", back_populates="user")
-    usage_history = relationship("UsageHistory", back_populates="user")
+    pets = relationship("Pet", back_populates="user", cascade="all, delete-orphan")
+    usage_history = relationship("UsageHistory", back_populates="user", cascade="all, delete-orphan")
 
 class Pet(Base):
     __tablename__ = 'pets'
@@ -79,10 +75,31 @@ class Pet(Base):
     breed = Column(String(255))
     type = Column(String(100))
     weight = Column(Float)
-    photo_url = Column(String(500))
+    photo_url = Column(Text)  # MUDADO: Text ao invés de String(500)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="pets")
+    meals = relationship("Meal", back_populates="pet", cascade="all, delete-orphan")
+    vaccines = relationship("Vaccine", back_populates="pet", cascade="all, delete-orphan")
+
+class Meal(Base):
+    __tablename__ = 'meals'
+    id = Column(Integer, primary_key=True)
+    pet_id = Column(Integer, ForeignKey('pets.id'), nullable=False)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    
+    pet = relationship("Pet", back_populates="meals")
+
+class Vaccine(Base):
+    __tablename__ = 'vaccines'
+    id = Column(Integer, primary_key=True)
+    pet_id = Column(Integer, ForeignKey('pets.id'), nullable=False)
+    name = Column(String(255), nullable=False)
+    scheduled_date = Column(DateTime)
+    applied_date = Column(DateTime)
+    is_applied = Column(Boolean, default=False)
+    
+    pet = relationship("Pet", back_populates="vaccines")
 
 class UsageHistory(Base):
     __tablename__ = 'usage_history'
@@ -95,7 +112,6 @@ class UsageHistory(Base):
     user = relationship("User", back_populates="usage_history")
 
 def init_db():
-    """Inicializa o banco de dados"""
     Base.metadata.create_all(engine)
     print("✅ Database initialized with PostgreSQL")
 
@@ -116,7 +132,6 @@ def login_required(f):
     return decorated_function
 
 def check_points(points_needed):
-    """Decorator para verificar se o usuário tem pontos suficientes"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
@@ -147,11 +162,9 @@ def check_points(points_needed):
 # ========== HELPER FUNCTIONS ==========
 
 def hash_password(password):
-    """Hash de senha simples"""
     return hashlib.sha256(password.encode()).hexdigest()
 
 def deduct_points(user_id, points):
-    """Deduz pontos do usuário"""
     user = db_session.query(User).filter_by(id=user_id).first()
     if user and not user.is_premium:
         user.points -= points
@@ -160,7 +173,6 @@ def deduct_points(user_id, points):
         db_session.commit()
 
 def get_user_info(user_id):
-    """Retorna informações do usuário"""
     user = db_session.query(User).filter_by(id=user_id).first()
     if user:
         return {
@@ -171,66 +183,76 @@ def get_user_info(user_id):
         }
     return None
 
-# ========== GEMINI API ==========
+# ========== GEMINI API (CORRIGIDA) ==========
 
-def call_gemini_api(prompt, base64_image=None):
-    """Função auxiliar para comunicação com a API do Gemini"""
+def call_gemini_api(prompt, images=None):
+    """Chamada para Gemini 2.0 Flash com suporte a múltiplas imagens"""
     
-    print(f"📡 Iniciando chamada Gemini API...")
+    print(f"📡 Chamando Gemini 2.0 Flash...")
     
     if not GEMINI_API_KEY:
-        return "❌ GEMINI_API_KEY não configurada no servidor!"
+        return "❌ GEMINI_API_KEY não configurada!"
 
-    models = [
-        "gemini-2.0-flash-exp",
-        "gemini-1.5-flash-latest",
-        "gemini-1.5-flash"
-    ]
+    # Modelo correto que está funcionando
+    model = "gemini-2.0-flash-exp"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
     
-    for model in models:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+    # Preparar partes do conteúdo
+    parts = [{"text": prompt}]
+    
+    # Adicionar imagens se houver
+    if images:
+        if not isinstance(images, list):
+            images = [images]
         
-        payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }]
-        }
-
-        if base64_image:
-            if "," in base64_image:
-                mime_type = base64_image.split(";")[0].split(":")[1]
-                base64_data = base64_image.split(",")[1]
-            else:
-                mime_type = "image/jpeg"
-                base64_data = base64_image
+        for img in images:
+            if img:
+                # Extrair MIME type e dados base64
+                if "," in img:
+                    mime_type = img.split(";")[0].split(":")[1]
+                    base64_data = img.split(",")[1]
+                else:
+                    mime_type = "image/jpeg"
+                    base64_data = img
                 
-            payload["contents"][0]["parts"].append({
-                "inlineData": {
-                    "mimeType": mime_type,
-                    "data": base64_data
-                }
-            })
-
-        try:
-            response = requests.post(url, headers={'Content-Type': 'application/json'}, json=payload, timeout=60)
-            
-            if response.status_code == 200:
-                result = response.json()
-                text_result = result.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "")
-                print(f"✅ Sucesso com modelo {model}!")
-                return text_result
-            
-            if response.status_code == 404:
-                continue
-            
-            if response.status_code == 429:
-                return "⚠️ Limite de requisições atingido. Aguarde alguns segundos."
-            
-        except Exception as e:
-            print(f"❌ Erro ao chamar {model}: {str(e)}")
-            continue
+                parts.append({
+                    "inlineData": {
+                        "mimeType": mime_type,
+                        "data": base64_data
+                    }
+                })
     
-    return "❌ Nenhum modelo Gemini respondeu. Verifique a chave API."
+    payload = {
+        "contents": [{
+            "parts": parts
+        }],
+        "generationConfig": {
+            "temperature": 0.7,
+            "topK": 40,
+            "topP": 0.95,
+            "maxOutputTokens": 2048,
+        }
+    }
+
+    try:
+        response = requests.post(url, headers={'Content-Type': 'application/json'}, json=payload, timeout=60)
+        
+        if response.status_code == 200:
+            result = response.json()
+            text_result = result.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "")
+            print(f"✅ Gemini respondeu com sucesso!")
+            return text_result
+        
+        if response.status_code == 429:
+            return "⚠️ Limite de requisições atingido. Aguarde alguns segundos."
+        
+        error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
+        print(f"❌ Erro Gemini: {error_msg}")
+        return f"❌ Erro na API: {error_msg}"
+        
+    except Exception as e:
+        print(f"❌ Exceção ao chamar Gemini: {str(e)}")
+        return f"❌ Erro: {str(e)}"
 
 # ========== ROTAS DE AUTENTICAÇÃO ==========
 
@@ -337,7 +359,7 @@ def chat():
     try:
         data = request.json
         prompt = data.get('prompt')
-        image = data.get('image')
+        images = data.get('images', [])  # Agora aceita múltiplas imagens
         
         if not prompt:
             return jsonify({"error": "Prompt é obrigatório"}), 400
@@ -347,7 +369,7 @@ def chat():
         if not user_info_data['is_premium']:
             deduct_points(session['user_id'], POINTS_PER_AI_CALL)
         
-        result = call_gemini_api(prompt, image)
+        result = call_gemini_api(prompt, images)
         updated_info = get_user_info(session['user_id'])
         
         return jsonify({
@@ -365,14 +387,25 @@ def chat():
 @login_required
 def get_pets():
     pets = db_session.query(Pet).filter_by(user_id=session['user_id']).all()
-    return jsonify([{
-        "id": p.id,
-        "name": p.name,
-        "breed": p.breed,
-        "type": p.type,
-        "weight": p.weight,
-        "photo_url": p.photo_url
-    } for p in pets])
+    result = []
+    for p in pets:
+        # Contar refeições dos últimos 7 dias
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        meals = db_session.query(Meal).filter(
+            Meal.pet_id == p.id,
+            Meal.timestamp >= seven_days_ago
+        ).all()
+        
+        result.append({
+            "id": p.id,
+            "name": p.name,
+            "breed": p.breed,
+            "type": p.type,
+            "weight": p.weight,
+            "photo_url": p.photo_url,
+            "meal_count": len(meals)
+        })
+    return jsonify(result)
 
 @app.route('/api/pets', methods=['POST'])
 @login_required
@@ -382,7 +415,7 @@ def create_pet():
         new_pet = Pet(
             user_id=session['user_id'],
             name=data['name'],
-            breed=data.get('breed'),
+            breed=data.get('breed', 'Raça indefinida'),
             type=data.get('type', 'Cachorro'),
             weight=data.get('weight', 0),
             photo_url=data.get('photo_url')
@@ -393,6 +426,91 @@ def create_pet():
     except Exception as e:
         db_session.rollback()
         print(f"❌ Erro ao criar pet: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+# ========== ROTAS DE REFEIÇÕES ==========
+
+@app.route('/api/meals/<int:pet_id>', methods=['GET'])
+@login_required
+def get_meals(pet_id):
+    """Retorna refeições dos últimos 7 dias"""
+    seven_days_ago = datetime.utcnow() - timedelta(days=7)
+    meals = db_session.query(Meal).filter(
+        Meal.pet_id == pet_id,
+        Meal.timestamp >= seven_days_ago
+    ).all()
+    
+    # Agrupar por dia
+    meals_by_day = {}
+    for meal in meals:
+        day = meal.timestamp.strftime('%Y-%m-%d')
+        meals_by_day[day] = meals_by_day.get(day, 0) + 1
+    
+    # Criar array dos últimos 7 dias
+    result = []
+    for i in range(6, -1, -1):
+        day = (datetime.utcnow() - timedelta(days=i)).strftime('%Y-%m-%d')
+        result.append(meals_by_day.get(day, 0))
+    
+    return jsonify(result)
+
+@app.route('/api/meals/<int:pet_id>', methods=['POST'])
+@login_required
+def add_meal(pet_id):
+    try:
+        meal = Meal(pet_id=pet_id)
+        db_session.add(meal)
+        db_session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# ========== ROTAS DE VACINAS ==========
+
+@app.route('/api/vaccines/<int:pet_id>', methods=['GET'])
+@login_required
+def get_vaccines(pet_id):
+    vaccines = db_session.query(Vaccine).filter_by(pet_id=pet_id).all()
+    return jsonify([{
+        "id": v.id,
+        "name": v.name,
+        "scheduled_date": v.scheduled_date.isoformat() if v.scheduled_date else None,
+        "applied_date": v.applied_date.isoformat() if v.applied_date else None,
+        "is_applied": v.is_applied
+    } for v in vaccines])
+
+@app.route('/api/vaccines/<int:pet_id>', methods=['POST'])
+@login_required
+def add_vaccine(pet_id):
+    try:
+        data = request.json
+        vaccine = Vaccine(
+            pet_id=pet_id,
+            name=data['name'],
+            scheduled_date=datetime.fromisoformat(data['scheduled_date']) if data.get('scheduled_date') else None,
+            is_applied=data.get('is_applied', False)
+        )
+        db_session.add(vaccine)
+        db_session.commit()
+        return jsonify({"success": True, "vaccine_id": vaccine.id})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/vaccines/<int:vaccine_id>/apply', methods=['POST'])
+@login_required
+def apply_vaccine(vaccine_id):
+    try:
+        vaccine = db_session.query(Vaccine).filter_by(id=vaccine_id).first()
+        if vaccine:
+            vaccine.is_applied = True
+            vaccine.applied_date = datetime.utcnow()
+            db_session.commit()
+            return jsonify({"success": True})
+        return jsonify({"error": "Vacina não encontrada"}), 404
+    except Exception as e:
+        db_session.rollback()
         return jsonify({"error": str(e)}), 500
 
 # ========== ROTAS DE PAGAMENTO STRIPE ==========
@@ -486,7 +604,6 @@ def payment_cancel():
 
 @app.route('/api/test-gemini', methods=['GET'])
 def test_gemini():
-    """Rota de teste para debug da API Gemini"""
     result = call_gemini_api("Diga apenas: OK, estou funcionando!")
     return jsonify({
         "test_result": result,

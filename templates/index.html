@@ -87,6 +87,53 @@
             0%, 100% { filter: brightness(1); }
             50% { filter: brightness(1.2); }
         }
+
+        .image-upload-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .image-preview-box {
+            position: relative;
+            aspect-ratio: 1;
+            border: 2px dashed #cbd5e1;
+            border-radius: 1rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .image-preview-box:hover {
+            border-color: #7c3aed;
+        }
+
+        .image-preview-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .image-preview-box .remove-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .image-preview-box:hover .remove-btn {
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="overflow-x-hidden">
@@ -108,7 +155,7 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
                     </span>
-                    Nova IA Generativa Nexus v2.5
+                    Nova IA Generativa Nexus v2.0
                 </div>
                 <h1 class="text-6xl font-black tracking-tighter leading-none">Cuide do seu pet com <span class="text-purple-600">Inteligência</span>.</h1>
                 <p class="text-xl text-slate-500 font-medium">Controle a alimentação, monitore a saúde e use IA para entender as necessidades reais do seu melhor amigo.</p>
@@ -254,8 +301,8 @@
                         </div>
                         <div class="neo-card p-6 bg-blue-50 border-blue-100 flex flex-col justify-center">
                             <h4 class="text-xl font-black text-blue-800">Próxima Vacina</h4>
-                            <p class="text-sm text-blue-700 font-medium mt-1">V10 - Reforço anual</p>
-                            <p class="text-xs font-bold text-blue-400 mt-2">Em 14 dias</p>
+                            <p id="next-vaccine-text" class="text-sm text-blue-700 font-medium mt-1">Nenhuma agendada</p>
+                            <p id="next-vaccine-days" class="text-xs font-bold text-blue-400 mt-2"></p>
                         </div>
                     </div>
                     <div class="neo-card p-8 bg-white h-[400px]">
@@ -279,51 +326,39 @@
                         <button onclick="updateWeight()" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Salvar Peso</button>
                     </div>
                     <div class="neo-card p-8 bg-white space-y-4">
-                        <label class="font-bold text-sm text-slate-400 uppercase">2. Tabela Nutricional da Ração</label>
-                        <div id="drop-area" class="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center hover:border-purple-300 transition-all cursor-pointer" onclick="document.getElementById('kibble-upload').click()">
-                            <i class="fas fa-file-invoice text-3xl text-slate-300 mb-2"></i>
-                            <p class="text-slate-400 font-bold text-sm">Clique para subir a foto do verso da embalagem</p>
-                            <img id="kibble-preview" class="hidden mt-4 mx-auto max-h-40 rounded-lg shadow-md">
-                        </div>
-                        <input type="file" id="kibble-upload" accept="image/*" class="hidden" onchange="previewKibble(this)">
-                        <button onclick="analyzeKibble()" id="btn-analyze-kibble" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Analisar com IA (5 pontos)</button>
-                    </div>
-                </div>
-                <div id="nutri-result" class="hidden mt-8 p-8 neo-card bg-indigo-50 border-indigo-200">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center"><i class="fas fa-robot"></i></div>
-                        <h3 class="font-black text-xl text-indigo-900">Recomendação Nexus</h3>
-                    </div>
-                    <div id="nutri-text" class="text-indigo-900 leading-relaxed markdown-content"></div>
-                </div>
-            </div>
-
-            <div id="content-curiosities" class="tab-content hidden animate-in slide-in-from-right duration-300">
-                <h2 class="text-4xl font-black mb-8">Curiosidades da Raça</h2>
-                <div id="curiosity-box" class="neo-card p-10 bg-white min-h-[400px]">
-                    <div id="curiosity-loading" class="hidden space-y-4">
-                        <div class="h-8 w-1/2 loading-shimmer rounded-lg"></div>
-                        <div class="h-24 w-full loading-shimmer rounded-lg"></div>
-                        <div class="h-10 w-1/3 loading-shimmer rounded-lg"></div>
-                    </div>
-                    <div id="curiosity-data" class="space-y-6 markdown-content">
-                        <p class="text-slate-400 font-medium">Cadastre seu pet para descobrir a história e os segredos da sua raça.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="content-consultation" class="tab-content hidden animate-in slide-in-from-right duration-300">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-8 gap-4">
-                    <h2 class="text-4xl font-black">Triagem IA</h2>
-                    <div class="flex gap-2">
-                        <span class="px-4 py-2 bg-purple-100 text-purple-600 rounded-full font-bold text-xs uppercase">Processador: Gemini 2.5 Flash</span>
-                    </div>
-                </div>
-                <div class="grid lg:grid-cols-5 gap-8">
-                    <div class="lg:col-span-3 space-y-6">
-                        <div class="neo-card p-8 bg-white shadow-sm border-slate-100">
-                            <h3 class="font-bold mb-4">O que está acontecendo?</h3>
-                            <textarea id="ai-symptoms" class="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl h-48 focus:border-purple-300 outline-none transition-all resize-none" placeholder="Ex: Meu pet está mancando da pata traseira esquerda desde hoje cedo e parece sem apetite..."></textarea>
+                        <label class="font-bold text-sm text-slate-400 uppercase">2. Foto do Pet + Tabela Nutricional</label>
+                        <div class="image-upload-grid">
+                            <!-- Pet Photo -->
+                            <div class="image-preview-box" onclick="document.getElementById('pet-body-upload').click()">
+                                <img id="pet-body-preview" class="hidden" alt="Pet">
+                                <div id="pet-body-placeholder" class="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                    <i class="fas fa-dog text-3xl mb-2"></i>
+                                    <p class="text-xs font-bold">Foto do Pet</p>
+                                </div>
+                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-3').click()">
+                                    <img id="consult-preview-3" class="hidden" alt="">
+                                    <div id="consult-placeholder-3" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(3)">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-4').click()">
+                                    <img id="consult-preview-4" class="hidden" alt="">
+                                    <div id="consult-placeholder-4" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(4)">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="file" id="consult-img-1" accept="image/*" class="hidden" onchange="handleConsultImage(this, 1)">
+                            <input type="file" id="consult-img-2" accept="image/*" class="hidden" onchange="handleConsultImage(this, 2)">
+                            <input type="file" id="consult-img-3" accept="image/*" class="hidden" onchange="handleConsultImage(this, 3)">
+                            <input type="file" id="consult-img-4" accept="image/*" class="hidden" onchange="handleConsultImage(this, 4)">
+                            
                             <button onclick="runConsultation()" id="btn-consult" class="w-full btn-gradient text-white py-5 rounded-2xl font-black text-lg mt-6 shadow-xl flex items-center justify-center gap-3">
                                 <i class="fas fa-microchip"></i> Iniciar Análise Nexus (5 pontos)
                             </button>
@@ -336,7 +371,7 @@
                     <div class="lg:col-span-2 space-y-6">
                         <div class="neo-card p-6 bg-purple-600 text-white">
                             <h4 class="font-black text-lg mb-2"><i class="fas fa-info-circle mr-2"></i>Como funciona</h4>
-                            <p class="text-sm opacity-90 leading-relaxed">Nossa IA analisa os sintomas baseada em protocolos veterinários mundiais para indicar o nível de prioridade e preparar você para a consulta.</p>
+                            <p class="text-sm opacity-90 leading-relaxed">Nossa IA analisa os sintomas e fotos baseada em protocolos veterinários mundiais para indicar o nível de prioridade e preparar você para a consulta.</p>
                         </div>
                         <div class="neo-card p-6 bg-red-50 border-red-100">
                             <h4 class="font-black text-red-800 text-lg mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Atenção</h4>
@@ -347,28 +382,14 @@
             </div>
 
             <div id="content-vaccines" class="tab-content hidden">
-                 <h2 class="text-4xl font-black mb-8">Cartão de Vacinação</h2>
-                 <div class="grid gap-4">
-                    <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 border-emerald-500 shadow-sm">
-                        <div>
-                            <h4 class="font-black">Anti-rábica</h4>
-                            <p class="text-sm text-slate-400 font-bold">Dose: 20/02/2024</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-xs font-black uppercase">Aplicada</span>
-                            <i class="fas fa-check-circle text-emerald-500"></i>
-                        </div>
-                    </div>
-                    <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 border-amber-500 shadow-sm">
-                        <div>
-                            <h4 class="font-black text-slate-800">V10 (Quíntupla)</h4>
-                            <p class="text-sm text-slate-400 font-bold">Agendada: 25/01/2025</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="bg-amber-100 text-amber-600 px-3 py-1 rounded-full text-xs font-black uppercase">Pendente</span>
-                            <button class="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400"><i class="fas fa-bell"></i></button>
-                        </div>
-                    </div>
+                 <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-4xl font-black">Cartão de Vacinação</h2>
+                    <button onclick="toggleModal('vaccine-modal', true)" class="btn-gradient text-white px-6 py-3 rounded-2xl font-bold shadow-md">
+                        <i class="fas fa-plus mr-2"></i>Adicionar Vacina
+                    </button>
+                 </div>
+                 <div id="vaccines-list" class="grid gap-4">
+                    <p class="text-slate-400 text-center py-20">Nenhuma vacina cadastrada ainda.</p>
                  </div>
             </div>
         </main>
@@ -415,6 +436,27 @@
             <div class="flex gap-3 mt-8">
                 <button onclick="toggleModal('pet-modal', false)" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Cancelar</button>
                 <button onclick="savePet()" class="flex-1 btn-gradient text-white py-4 rounded-2xl font-black shadow-lg">Finalizar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VACCINE MODAL -->
+    <div id="vaccine-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
+            <h3 class="text-2xl font-black mb-6 text-center">Adicionar Vacina</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Nome da Vacina</label>
+                    <input type="text" id="vaccine-name" placeholder="Ex: V10, Anti-rábica" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-300">
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-slate-400 ml-2">Data Agendada</label>
+                    <input type="date" id="vaccine-date" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl outline-none focus:border-purple-300">
+                </div>
+            </div>
+            <div class="flex gap-3 mt-8">
+                <button onclick="toggleModal('vaccine-modal', false)" class="flex-1 py-4 font-bold text-slate-400 hover:text-slate-600 transition-colors">Cancelar</button>
+                <button onclick="saveVaccine()" class="flex-1 btn-gradient text-white py-4 rounded-2xl font-black shadow-lg">Salvar Vacina</button>
             </div>
         </div>
     </div>
@@ -472,15 +514,10 @@
 
     <script>
         let currentUser = null;
-        let currentPet = { 
-            name: "", 
-            breed: "", 
-            type: "Cachorro", 
-            weight: 0, 
-            photo: null, 
-            meals: [2, 1, 3, 2, 2, 3, 0] 
-        };
+        let currentPet = null;
+        let petBodyImage = null;
         let kibbleImage = null;
+        let consultImages = [null, null, null, null];
         let feedingChart = null;
 
         // --- Core UI Functions ---
@@ -503,9 +540,12 @@
             activeBtn.classList.add('active', 'text-purple-600');
             activeBtn.classList.remove('text-slate-400');
             
-            if(tabId === 'curiosities' && currentPet.breed) loadCuriosities();
-            if(tabId === 'dashboard' && currentPet.name) {
-                setTimeout(initChart, 100);
+            if(tabId === 'curiosities' && currentPet) loadCuriosities();
+            if(tabId === 'dashboard' && currentPet) {
+                setTimeout(loadMealsAndChart, 100);
+            }
+            if(tabId === 'vaccines' && currentPet) {
+                loadVaccines();
             }
         }
 
@@ -564,6 +604,306 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
+                
+                if (response.ok) {
+                    toggleModal('vaccine-modal', false);
+                    document.getElementById('vaccine-name').value = '';
+                    document.getElementById('vaccine-date').value = '';
+                    showToast('Vacina cadastrada!');
+                    loadVaccines();
+                    loadNextVaccine();
+                }
+            } catch (error) {
+                showToast('Erro ao salvar vacina', true);
+            }
+        }
+
+        async function applyVaccine(vaccineId) {
+            try {
+                const response = await fetch(`/api/vaccines/${vaccineId}/apply`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showToast('Vacina marcada como aplicada!');
+                    loadVaccines();
+                    loadNextVaccine();
+                }
+            } catch (error) {
+                showToast('Erro ao aplicar vacina', true);
+            }
+        }
+
+        async function loadNextVaccine() {
+            if (!currentPet) return;
+            
+            try {
+                const response = await fetch(`/api/vaccines/${currentPet.id}`);
+                const vaccines = await response.json();
+                
+                const nextVaccine = vaccines
+                    .filter(v => !v.is_applied)
+                    .sort((a, b) => new Date(a.scheduled_date) - new Date(b.scheduled_date))[0];
+                
+                if (nextVaccine) {
+                    const date = new Date(nextVaccine.scheduled_date);
+                    const today = new Date();
+                    const diffDays = Math.ceil((date - today) / (1000 * 60 * 60 * 24));
+                    
+                    document.getElementById('next-vaccine-text').innerText = `${nextVaccine.name} - ${date.toLocaleDateString('pt-BR')}`;
+                    document.getElementById('next-vaccine-days').innerText = diffDays > 0 ? `Em ${diffDays} dias` : diffDays === 0 ? 'Hoje!' : 'Atrasada!';
+                } else {
+                    document.getElementById('next-vaccine-text').innerText = 'Nenhuma agendada';
+                    document.getElementById('next-vaccine-days').innerText = '';
+                }
+            } catch (error) {
+                console.error('Erro ao carregar próxima vacina:', error);
+            }
+        }
+
+        // --- NutriScan ---
+
+        function updateWeight() {
+            const w = document.getElementById('scan-weight').value;
+            if(w && currentPet) {
+                currentPet.weight = parseFloat(w);
+                document.getElementById('active-pet-weight-display').innerText = `Peso: ${w}kg`;
+                showToast("Peso atualizado!");
+            }
+        }
+
+        function previewPetBody(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    petBodyImage = e.target.result;
+                    const prev = document.getElementById('pet-body-preview');
+                    prev.src = e.target.result;
+                    prev.classList.remove('hidden');
+                    document.getElementById('pet-body-placeholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removePetBodyImage() {
+            petBodyImage = null;
+            document.getElementById('pet-body-preview').classList.add('hidden');
+            document.getElementById('pet-body-placeholder').classList.remove('hidden');
+            document.getElementById('pet-body-upload').value = '';
+        }
+
+        function previewKibble(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    kibbleImage = e.target.result;
+                    const prev = document.getElementById('kibble-preview');
+                    prev.src = e.target.result;
+                    prev.classList.remove('hidden');
+                    document.getElementById('kibble-placeholder').classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeKibbleImage() {
+            kibbleImage = null;
+            document.getElementById('kibble-preview').classList.add('hidden');
+            document.getElementById('kibble-placeholder').classList.remove('hidden');
+            document.getElementById('kibble-upload').value = '';
+        }
+
+        async function analyzeKibble() {
+            if(!kibbleImage && !petBodyImage) {
+                showToast("Envie pelo menos uma foto!", true);
+                return;
+            }
+            
+            const btn = document.getElementById('btn-analyze-kibble');
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Processando...';
+            btn.disabled = true;
+
+            const images = [];
+            if (petBodyImage) images.push(petBodyImage);
+            if (kibbleImage) images.push(kibbleImage);
+
+            const prompt = `Analise as imagens fornecidas. 
+            ${petBodyImage ? 'A primeira imagem mostra o pet, avalie o tamanho e condição corporal.' : ''}
+            ${kibbleImage ? 'A imagem do rótulo da ração mostra a tabela nutricional.' : ''}
+            
+            O pet é um ${currentPet?.type || 'animal'} ${currentPet?.breed || ''} que pesa ${currentPet?.weight || 'peso não informado'}kg. 
+            
+            Baseado nas informações:
+            1. Calcule a gramatura diária ideal dividida em refeições
+            2. Avalie se a ração é adequada para o porte e idade
+            3. Destaque os principais nutrientes e benefícios
+            
+            Formate com subtítulos em negrito e seja objetivo.`;
+
+            const result = await callGemini(prompt, images);
+            
+            if (result) {
+                document.getElementById('nutri-result').classList.remove('hidden');
+                document.getElementById('nutri-text').innerHTML = parseMarkdown(result);
+            }
+            
+            btn.innerHTML = 'Analisar com IA (5 pontos)';
+            btn.disabled = false;
+        }
+
+        // --- Curiosities ---
+
+        async function loadCuriosities() {
+            if (!currentPet) return;
+            
+            const box = document.getElementById('curiosity-data');
+            const loader = document.getElementById('curiosity-loading');
+            
+            box.classList.add('hidden');
+            loader.classList.remove('hidden');
+
+            const prompt = `Gere 3 curiosidades fascinantes e pouco conhecidas sobre a raça ${currentPet.breed} (${currentPet.type}). 
+            Inclua uma dica de comportamento específica. Use ícones emoji e tom amigável.`;
+            
+            const result = await callGemini(prompt);
+            
+            if (result) {
+                box.innerHTML = parseMarkdown(result);
+            }
+            
+            loader.classList.add('hidden');
+            box.classList.remove('hidden');
+        }
+
+        // --- Consultation with Multiple Images ---
+
+        function handleConsultImage(input, index) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    consultImages[index - 1] = e.target.result;
+                    const preview = document.getElementById(`consult-preview-${index}`);
+                    const placeholder = document.getElementById(`consult-placeholder-${index}`);
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function removeConsultImage(index) {
+            consultImages[index - 1] = null;
+            const preview = document.getElementById(`consult-preview-${index}`);
+            const placeholder = document.getElementById(`consult-placeholder-${index}`);
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            document.getElementById(`consult-img-${index}`).value = '';
+        }
+
+        async function runConsultation() {
+            const symptoms = document.getElementById('ai-symptoms').value;
+            if(!symptoms) {
+                showToast("Descreva o que seu pet sente.", true);
+                return;
+            }
+
+            const btn = document.getElementById('btn-consult');
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Analisando Quadro Clínico...';
+            btn.disabled = true;
+
+            // Filtrar apenas imagens que foram adicionadas
+            const activeImages = consultImages.filter(img => img !== null);
+
+            const prompt = `Aja como um auxiliar veterinário avançado. 
+            
+            SINTOMAS RELATADOS: "${symptoms}"
+            
+            PET: ${currentPet?.type || 'Animal'} ${currentPet?.breed || ''}, ${currentPet?.weight || '--'}kg
+            
+            ${activeImages.length > 0 ? 'ANÁLISE DAS IMAGENS: Observe as fotos do pet anexadas.' : ''}
+            
+            Sua análise deve:
+            1. Avaliar possíveis causas (sem dar diagnóstico final)
+            2. Definir Nível de Urgência: BAIXO, MÉDIO, ALTO ou CRÍTICO
+            3. Sugerir perguntas importantes para fazer ao veterinário
+            4. Indicar sinais de alerta que exigem atenção imediata
+            
+            IMPORTANTE: Inicie sua resposta com "URGÊNCIA: [NÍVEL]"`;
+
+            const result = await callGemini(prompt, activeImages.length > 0 ? activeImages : null);
+            
+            if (result) {
+                const resultDiv = document.getElementById('ai-result');
+                const badge = document.getElementById('urgency-badge');
+                
+                resultDiv.classList.remove('hidden');
+                
+                if(result.includes('CRÍTICO') || result.includes('ALTO')) {
+                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-red-100 text-red-600 pulse-urgent";
+                    badge.innerText = "🚨 Urgência Elevada";
+                } else if(result.includes('MÉDIO')) {
+                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-amber-100 text-amber-600";
+                    badge.innerText = "⚠️ Atenção Moderada";
+                } else {
+                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-blue-100 text-blue-600";
+                    badge.innerText = "ℹ️ Triagem Informativa";
+                }
+
+                document.getElementById('consult-text').innerHTML = parseMarkdown(result);
+                resultDiv.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            btn.innerHTML = '<i class="fas fa-microchip"></i> Iniciar Análise Nexus (5 pontos)';
+            btn.disabled = false;
+        }
+
+        // --- Premium/Stripe ---
+
+        async function initPremiumCheckout() {
+            const btn = document.getElementById('btn-premium-checkout');
+            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Preparando...';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/stripe/create-checkout-session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error);
+                }
+
+                window.location.href = data.checkout_url;
+            } catch (error) {
+                showToast('Erro ao processar pagamento: ' + error.message, true);
+                btn.innerHTML = '<i class="fas fa-crown mr-2"></i>Assinar Premium';
+                btn.disabled = false;
+            }
+        }
+
+        // --- Helper: Simple Markdown Parser ---
+        function parseMarkdown(text) {
+            return text
+                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
+                .replace(/\*(.*)\*/gim, '<em>$1</em>')
+                .replace(/\n/gim, '<br>');
+        }
+
+        // Initialize
+        window.onload = () => {
+            console.log("✅ Nexus Ecosystem Online - v2.0");
+        };
+    </script>
+</body>
+</html>
 
                 const data = await response.json();
 
@@ -618,7 +958,7 @@
             try {
                 await fetch('/api/logout', { method: 'POST' });
                 currentUser = null;
-                currentPet = { name: "", breed: "", type: "Cachorro", weight: 0, photo: null, meals: [2, 1, 3, 2, 2, 3, 0] };
+                currentPet = null;
                 showView('landing');
                 showToast('Até logo!');
             } catch (error) {
@@ -628,12 +968,12 @@
 
         // --- API Calls ---
 
-        async function callGemini(prompt, image = null) {
+        async function callGemini(prompt, images = null) {
             try {
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, image })
+                    body: JSON.stringify({ prompt, images })
                 });
                 
                 const data = await response.json();
@@ -668,12 +1008,7 @@
                 const pets = await response.json();
                 
                 if (pets.length > 0) {
-                    const pet = pets[0];
-                    currentPet.name = pet.name;
-                    currentPet.breed = pet.breed;
-                    currentPet.type = pet.type;
-                    currentPet.weight = pet.weight;
-                    currentPet.photo = pet.photo_url;
+                    currentPet = pets[0];
                     
                     document.getElementById('tutor-empty-state').classList.add('hidden');
                     document.getElementById('tutor-active-state').classList.remove('hidden');
@@ -681,9 +1016,10 @@
                     document.getElementById('active-pet-name').innerText = currentPet.name;
                     document.getElementById('active-pet-info').innerText = `${currentPet.type} • ${currentPet.breed}`;
                     document.getElementById('active-pet-weight-display').innerText = `Peso: ${currentPet.weight}kg`;
-                    document.getElementById('active-pet-img').src = currentPet.photo || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
+                    document.getElementById('active-pet-img').src = currentPet.photo_url || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
                     
-                    initChart();
+                    loadMealsAndChart();
+                    loadNextVaccine();
                 }
             } catch (error) {
                 console.error('Erro ao carregar pets:', error);
@@ -694,16 +1030,14 @@
             if (input.files?.[0]) {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
-                    const base64 = e.target.result.split(',')[1];
                     const preview = document.getElementById('upload-preview');
                     preview.src = e.target.result;
                     preview.classList.remove('hidden');
                     document.getElementById('cam-icon').classList.add('hidden');
-                    currentPet.photo = e.target.result;
 
                     document.getElementById('breed-loader').classList.remove('hidden');
-                    const breedPrompt = "Seja direto. Analise esta foto e identifique apenas a raça predominante do pet. Responda apenas o nome da raça.";
-                    const detectedBreed = await callGemini(breedPrompt, base64);
+                    const breedPrompt = "Seja direto. Analise esta foto e identifique apenas a raça predominante do pet. Responda apenas o nome da raça, sem explicações.";
+                    const detectedBreed = await callGemini(breedPrompt, [e.target.result]);
                     
                     if (detectedBreed) {
                         document.getElementById('new-pet-breed').value = detectedBreed.replace(/[#*]/g, '').trim();
@@ -720,6 +1054,7 @@
             const breed = document.getElementById('new-pet-breed').value;
             const weight = document.getElementById('new-pet-weight').value;
             const type = document.getElementById('new-pet-type').value;
+            const photo = document.getElementById('upload-preview').src;
 
             if(!name || !weight) {
                 showToast("Nome e peso são obrigatórios!", true);
@@ -735,36 +1070,62 @@
                         breed: breed || "Raça indefinida",
                         type,
                         weight: parseFloat(weight),
-                        photo_url: currentPet.photo
+                        photo_url: photo
                     })
                 });
 
                 if (!response.ok) throw new Error('Erro ao salvar pet');
 
-                currentPet.name = name;
-                currentPet.breed = breed || "Raça indefinida";
-                currentPet.weight = parseFloat(weight);
-                currentPet.type = type;
-
-                document.getElementById('tutor-empty-state').classList.add('hidden');
-                document.getElementById('tutor-active-state').classList.remove('hidden');
+                const data = await response.json();
                 
-                document.getElementById('active-pet-name').innerText = currentPet.name;
-                document.getElementById('active-pet-info').innerText = `${currentPet.type} • ${currentPet.breed}`;
-                document.getElementById('active-pet-weight-display').innerText = `Peso: ${currentPet.weight}kg`;
-                document.getElementById('active-pet-img').src = currentPet.photo || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
+                // Recarregar pets
+                await loadUserPets();
                 
                 toggleModal('pet-modal', false);
                 showToast("Perfil criado no Nexus!");
-                initChart();
             } catch (error) {
                 showToast('Erro ao salvar pet', true);
             }
         }
 
-        // --- Features ---
+        // --- Meals & Chart ---
 
-        function initChart() {
+        async function loadMealsAndChart() {
+            if (!currentPet) return;
+            
+            try {
+                const response = await fetch(`/api/meals/${currentPet.id}`);
+                const mealsData = await response.json();
+                
+                // Atualizar contador do dia
+                const todayMeals = mealsData[mealsData.length - 1];
+                document.getElementById('meal-count-text').innerText = `Refeições hoje: ${todayMeals}`;
+                
+                // Atualizar gráfico
+                initChart(mealsData);
+            } catch (error) {
+                console.error('Erro ao carregar refeições:', error);
+            }
+        }
+
+        async function addMeal() {
+            if (!currentPet) return;
+            
+            try {
+                const response = await fetch(`/api/meals/${currentPet.id}`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showToast("Refeição registrada!");
+                    loadMealsAndChart();
+                }
+            } catch (error) {
+                showToast('Erro ao registrar refeição', true);
+            }
+        }
+
+        function initChart(data) {
             const ctx = document.getElementById('feedingChart')?.getContext('2d');
             if (!ctx) return;
             
@@ -776,7 +1137,7 @@
                     labels: ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Hoje'],
                     datasets: [{
                         label: 'Refeições',
-                        data: currentPet.meals,
+                        data: data,
                         borderColor: '#7c3aed',
                         backgroundColor: 'rgba(124, 58, 237, 0.1)',
                         fill: true,
@@ -800,164 +1161,140 @@
             });
         }
 
-        function addMeal() {
-            currentPet.meals[6]++;
-            document.getElementById('meal-count-text').innerText = `Refeições hoje: ${currentPet.meals[6]}`;
-            if(feedingChart) {
-                feedingChart.data.datasets[0].data = currentPet.meals;
-                feedingChart.update();
-            }
-            showToast("Refeição registrada!");
-        }
+        // --- Vaccines ---
 
-        function updateWeight() {
-            const w = document.getElementById('scan-weight').value;
-            if(w) {
-                currentPet.weight = parseFloat(w);
-                document.getElementById('active-pet-weight-display').innerText = `Peso: ${w}kg`;
-                showToast("Peso atualizado!");
-            }
-        }
-
-        function previewKibble(input) {
-            if (input.files?.[0]) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    kibbleImage = e.target.result.split(',')[1];
-                    const prev = document.getElementById('kibble-preview');
-                    prev.src = e.target.result;
-                    prev.classList.remove('hidden');
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        async function analyzeKibble() {
-            if(!kibbleImage) {
-                showToast("Envie a foto do rótulo!", true);
-                return;
-            }
+        async function loadVaccines() {
+            if (!currentPet) return;
             
-            const btn = document.getElementById('btn-analyze-kibble');
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Processando...';
-            btn.disabled = true;
-
-            const prompt = `Analise este rótulo de ração. O pet é um ${currentPet.type} ${currentPet.breed} que pesa ${currentPet.weight}kg. 
-            Baseado na tabela nutricional da imagem, calcule a gramatura diária ideal dividida em refeições. 
-            Formate com subtítulos em negrito e destaque os benefícios dos ingredientes encontrados.`;
-
-            const result = await callGemini(prompt, kibbleImage);
-            
-            if (result) {
-                document.getElementById('nutri-result').classList.remove('hidden');
-                document.getElementById('nutri-text').innerHTML = parseMarkdown(result);
-            }
-            
-            btn.innerHTML = 'Analisar com IA (5 pontos)';
-            btn.disabled = false;
-        }
-
-        async function loadCuriosities() {
-            const box = document.getElementById('curiosity-data');
-            const loader = document.getElementById('curiosity-loading');
-            
-            box.classList.add('hidden');
-            loader.classList.remove('hidden');
-
-            const prompt = `Gere 3 curiosidades fascinantes e pouco conhecidas sobre a raça ${currentPet.breed} (${currentPet.type}). 
-            Inclua uma dica de comportamento específica. Use ícones emoji e tom amigável.`;
-            
-            const result = await callGemini(prompt);
-            
-            if (result) {
-                box.innerHTML = parseMarkdown(result);
-            }
-            
-            loader.classList.add('hidden');
-            box.classList.remove('hidden');
-        }
-
-        async function runConsultation() {
-            const symptoms = document.getElementById('ai-symptoms').value;
-            if(!symptoms) {
-                showToast("Descreva o que seu pet sente.", true);
-                return;
-            }
-
-            const btn = document.getElementById('btn-consult');
-            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Analisando Quadro Clínico...';
-            btn.disabled = true;
-
-            const prompt = `Aja como um auxiliar veterinário avançado. O tutor relata: "${symptoms}". O pet é um ${currentPet.type} ${currentPet.breed}. 
-            Analise possíveis causas (sem dar diagnóstico final), defina o Nível de Urgência (Baixo, Médio, Alto, Crítico) e sugira perguntas para o tutor fazer ao veterinário real. 
-            Inicie a resposta com "URGÊNCIA: [NIVEL]"`;
-
-            const result = await callGemini(prompt);
-            
-            if (result) {
-                const resultDiv = document.getElementById('ai-result');
-                const badge = document.getElementById('urgency-badge');
-                
-                resultDiv.classList.remove('hidden');
-                
-                if(result.includes('Crítico') || result.includes('Alto')) {
-                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-red-100 text-red-600 pulse-urgent";
-                    badge.innerText = "🚨 Urgência Elevada";
-                } else {
-                    badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-blue-100 text-blue-600";
-                    badge.innerText = "ℹ️ Triagem Informativa";
-                }
-
-                document.getElementById('consult-text').innerHTML = parseMarkdown(result);
-                resultDiv.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            btn.innerHTML = '<i class="fas fa-microchip"></i> Iniciar Análise Nexus (5 pontos)';
-            btn.disabled = false;
-        }
-
-        // --- Premium/Stripe ---
-
-        async function initPremiumCheckout() {
-            const btn = document.getElementById('btn-premium-checkout');
-            btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Preparando...';
-            btn.disabled = true;
-
             try {
-                const response = await fetch('/api/stripe/create-checkout-session', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error);
+                const response = await fetch(`/api/vaccines/${currentPet.id}`);
+                const vaccines = await response.json();
+                
+                const list = document.getElementById('vaccines-list');
+                
+                if (vaccines.length === 0) {
+                    list.innerHTML = '<p class="text-slate-400 text-center py-20">Nenhuma vacina cadastrada ainda.</p>';
+                    return;
                 }
-
-                window.location.href = data.checkout_url;
+                
+                list.innerHTML = vaccines.map(v => {
+                    const isApplied = v.is_applied;
+                    const date = isApplied ? 
+                        new Date(v.applied_date).toLocaleDateString('pt-BR') : 
+                        new Date(v.scheduled_date).toLocaleDateString('pt-BR');
+                    
+                    return `
+                        <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 ${isApplied ? 'border-emerald-500' : 'border-amber-500'} shadow-sm">
+                            <div>
+                                <h4 class="font-black">${v.name}</h4>
+                                <p class="text-sm text-slate-400 font-bold">${isApplied ? 'Aplicada' : 'Agendada'}: ${date}</p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="bg-${isApplied ? 'emerald' : 'amber'}-100 text-${isApplied ? 'emerald' : 'amber'}-600 px-3 py-1 rounded-full text-xs font-black uppercase">${isApplied ? 'Aplicada' : 'Pendente'}</span>
+                                ${!isApplied ? `<button onclick="applyVaccine(${v.id})" class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-200"><i class="fas fa-check"></i></button>` : '<i class="fas fa-check-circle text-emerald-500"></i>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             } catch (error) {
-                showToast('Erro ao processar pagamento: ' + error.message, true);
-                btn.innerHTML = '<i class="fas fa-crown mr-2"></i>Assinar Premium';
-                btn.disabled = false;
+                console.error('Erro ao carregar vacinas:', error);
             }
         }
 
-        // --- Helper: Simple Markdown Parser ---
-        function parseMarkdown(text) {
-            return text
-                .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-                .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-                .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-                .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
-                .replace(/\*(.*)\*/gim, '<em>$1</em>')
-                .replace(/\n/gim, '<br>');
-        }
+        async function saveVaccine() {
+            if (!currentPet) return;
+            
+            const name = document.getElementById('vaccine-name').value;
+            const date = document.getElementById('vaccine-date').value;
+            
+            if (!name || !date) {
+                showToast('Preencha todos os campos!', true);
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/vaccines/${currentPet.id}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        scheduled_date: date
+                    })
+                
+                                <div class="remove-btn" onclick="event.stopPropagation(); removePetBodyImage()">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Kibble Label -->
+                            <div class="image-preview-box" onclick="document.getElementById('kibble-upload').click()">
+                                <img id="kibble-preview" class="hidden" alt="Ração">
+                                <div id="kibble-placeholder" class="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                    <i class="fas fa-barcode text-3xl mb-2"></i>
+                                    <p class="text-xs font-bold">Rótulo da Ração</p>
+                                </div>
+                                <div class="remove-btn" onclick="event.stopPropagation(); removeKibbleImage()">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="file" id="pet-body-upload" accept="image/*" class="hidden" onchange="previewPetBody(this)">
+                        <input type="file" id="kibble-upload" accept="image/*" class="hidden" onchange="previewKibble(this)">
+                        <button onclick="analyzeKibble()" id="btn-analyze-kibble" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Analisar com IA (5 pontos)</button>
+                    </div>
+                </div>
+                <div id="nutri-result" class="hidden mt-8 p-8 neo-card bg-indigo-50 border-indigo-200">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center"><i class="fas fa-robot"></i></div>
+                        <h3 class="font-black text-xl text-indigo-900">Recomendação Nexus</h3>
+                    </div>
+                    <div id="nutri-text" class="text-indigo-900 leading-relaxed markdown-content"></div>
+                </div>
+            </div>
 
-        // Initialize
-        window.onload = () => {
-            console.log("Nexus Ecosystem Online");
-        };
-    </script>
-</body>
-</html>
+            <div id="content-curiosities" class="tab-content hidden animate-in slide-in-from-right duration-300">
+                <h2 class="text-4xl font-black mb-8">Curiosidades da Raça</h2>
+                <div id="curiosity-box" class="neo-card p-10 bg-white min-h-[400px]">
+                    <div id="curiosity-loading" class="hidden space-y-4">
+                        <div class="h-8 w-1/2 loading-shimmer rounded-lg"></div>
+                        <div class="h-24 w-full loading-shimmer rounded-lg"></div>
+                        <div class="h-10 w-1/3 loading-shimmer rounded-lg"></div>
+                    </div>
+                    <div id="curiosity-data" class="space-y-6 markdown-content">
+                        <p class="text-slate-400 font-medium">Cadastre seu pet para descobrir a história e os segredos da sua raça.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-consultation" class="tab-content hidden animate-in slide-in-from-right duration-300">
+                <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-8 gap-4">
+                    <h2 class="text-4xl font-black">Triagem IA</h2>
+                    <div class="flex gap-2">
+                        <span class="px-4 py-2 bg-purple-100 text-purple-600 rounded-full font-bold text-xs uppercase">Processador: Gemini 2.0 Flash</span>
+                    </div>
+                </div>
+                <div class="grid lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3 space-y-6">
+                        <div class="neo-card p-8 bg-white shadow-sm border-slate-100">
+                            <h3 class="font-bold mb-4">O que está acontecendo?</h3>
+                            <textarea id="ai-symptoms" class="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl h-48 focus:border-purple-300 outline-none transition-all resize-none" placeholder="Ex: Meu pet está mancando da pata traseira esquerda desde hoje cedo e parece sem apetite..."></textarea>
+                            
+                            <label class="font-bold text-sm text-slate-400 uppercase mt-6 block">Fotos do Pet (até 4)</label>
+                            <div class="grid grid-cols-4 gap-3 mt-3">
+                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-1').click()">
+                                    <img id="consult-preview-1" class="hidden" alt="">
+                                    <div id="consult-placeholder-1" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(1)">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-2').click()">
+                                    <img id="consult-preview-2" class="hidden" alt="">
+                                    <div id="consult-placeholder-2" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(2)">
+                                        <i class="fas fa-times"></i>
+                                    </div>

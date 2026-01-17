@@ -1,4 +1,66 @@
-import os
+@app.route('/api/pets', methods=['POST'])
+@login_required
+def create_pet():
+    try:
+        data = request.json
+        new_pet = Pet(
+            user_id=session['user_id'],
+            name=data['name'],
+            breed=data.get('breed', 'Raça indefinida'),
+            type=data.get('type', 'Cachorro'),
+            weight=data.get('weight', 0),
+            photo_url=data.get('photo_url')
+        )
+        db_session.add(new_pet)
+        db_session.commit()
+        return jsonify({"success": True, "pet_id": new_pet.id})
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Erro ao criar pet: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pets/<int:pet_id>', methods=['PUT'])
+@login_required
+def update_pet(pet_id):
+    """Atualizar informações do pet"""
+    try:
+        data = request.json
+        pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
+        
+        if not pet:
+            return jsonify({"error": "Pet não encontrado"}), 404
+        
+        if 'weight' in data:
+            pet.weight = data['weight']
+        if 'breed' in data:
+            pet.breed = data['breed']
+        if 'name' in data:
+            pet.name = data['name']
+        if 'type' in data:
+            pet.type = data['type']
+            
+        db_session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pets/<int:pet_id>', methods=['DELETE'])
+@login_required
+def delete_pet(pet_id):
+    """Deletar pet"""
+    try:
+        pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
+        
+        if not pet:
+            return jsonify({"error": "Pet não encontrado"}), 404
+        
+        db_session.delete(pet)
+        db_session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db_session.rollback()
+        return jsonify({"error": str(e)}), 500import os
 from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -15,7 +77,9 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "fallback-secret-key-change-me")
-CORS(app)
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
+CORS(app, supports_credentials=True)
 
 # Configurações
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
@@ -311,16 +375,32 @@ def login():
         email = data.get('email')
         password = data.get('password')
         
+        print(f"🔐 Tentativa de login para: {email}")
+        
         if not email or not password:
             return jsonify({"error": "Email e senha são obrigatórios"}), 400
         
-        user = db_session.query(User).filter_by(email=email, password=hash_password(password)).first()
+        # Buscar usuário por email primeiro
+        user = db_session.query(User).filter_by(email=email).first()
         
         if not user:
+            print(f"❌ Usuário não encontrado: {email}")
+            return jsonify({"error": "Email ou senha incorretos"}), 401
+        
+        # Verificar senha
+        hashed_input = hash_password(password)
+        print(f"🔑 Hash armazenado: {user.password[:20]}...")
+        print(f"🔑 Hash fornecido: {hashed_input[:20]}...")
+        
+        if user.password != hashed_input:
+            print(f"❌ Senha incorreta para: {email}")
             return jsonify({"error": "Email ou senha incorretos"}), 401
         
         session['user_id'] = user.id
         session['email'] = email
+        session.permanent = True  # Tornar sessão permanente
+        
+        print(f"✅ Login bem-sucedido: {email}")
         
         return jsonify({
             "success": True,
@@ -335,6 +415,8 @@ def login():
         })
     except Exception as e:
         print(f"❌ Erro no login: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/logout', methods=['POST'])
@@ -407,25 +489,47 @@ def get_pets():
         })
     return jsonify(result)
 
-@app.route('/api/pets', methods=['POST'])
+@app.route('/api/pets/<int:pet_id>', methods=['PUT'])
 @login_required
-def create_pet():
+def update_pet(pet_id):
+    """Atualizar informações do pet"""
     try:
         data = request.json
-        new_pet = Pet(
-            user_id=session['user_id'],
-            name=data['name'],
-            breed=data.get('breed', 'Raça indefinida'),
-            type=data.get('type', 'Cachorro'),
-            weight=data.get('weight', 0),
-            photo_url=data.get('photo_url')
-        )
-        db_session.add(new_pet)
+        pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
+        
+        if not pet:
+            return jsonify({"error": "Pet não encontrado"}), 404
+        
+        if 'weight' in data:
+            pet.weight = data['weight']
+        if 'breed' in data:
+            pet.breed = data['breed']
+        if 'name' in data:
+            pet.name = data['name']
+        if 'type' in data:
+            pet.type = data['type']
+            
         db_session.commit()
-        return jsonify({"success": True, "pet_id": new_pet.id})
+        return jsonify({"success": True})
     except Exception as e:
         db_session.rollback()
-        print(f"❌ Erro ao criar pet: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/pets/<int:pet_id>', methods=['DELETE'])
+@login_required
+def delete_pet(pet_id):
+    """Deletar pet"""
+    try:
+        pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
+        
+        if not pet:
+            return jsonify({"error": "Pet não encontrado"}), 404
+        
+        db_session.delete(pet)
+        db_session.commit()
+        return jsonify({"success": True})
+    except Exception as e:
+        db_session.rollback()
         return jsonify({"error": str(e)}), 500
 
 # ========== ROTAS DE REFEIÇÕES ==========
@@ -611,6 +715,33 @@ def test_gemini():
         "api_key_preview": GEMINI_API_KEY[:10] + "..." if GEMINI_API_KEY else "NOT SET",
         "database": "PostgreSQL" if "postgresql" in DATABASE_URL else "SQLite"
     })
+
+# ========== ROTAS DE DEBUG (REMOVER EM PRODUÇÃO) ==========
+
+# ATENÇÃO: Estas rotas expõem dados sensíveis! 
+# Comente ou remova antes de fazer deploy em produção!
+
+# @app.route('/api/debug/users', methods=['GET'])
+# def debug_users():
+#     """Rota de debug para ver usuários cadastrados"""
+#     users = db_session.query(User).all()
+#     return jsonify([{
+#         "id": u.id,
+#         "email": u.email,
+#         "name": u.name,
+#         "password_hash": u.password[:20] + "...",
+#         "is_premium": u.is_premium,
+#         "points": u.points
+#     } for u in users])
+
+# @app.route('/api/debug/session', methods=['GET'])
+# def debug_session():
+#     """Rota de debug para verificar sessão"""
+#     return jsonify({
+#         "session_data": dict(session),
+#         "user_id": session.get('user_id'),
+#         "email": session.get('email')
+#     })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

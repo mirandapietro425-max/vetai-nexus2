@@ -60,7 +60,8 @@ def delete_pet(pet_id):
         return jsonify({"success": True})
     except Exception as e:
         db_session.rollback()
-        return jsonify({"error": str(e)}), 500import os
+        return jsonify({"error": str(e)}), 500
+        import os
 from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv

@@ -1,67 +1,4 @@
-@app.route('/api/pets', methods=['POST'])
-@login_required
-def create_pet():
-    try:
-        data = request.json
-        new_pet = Pet(
-            user_id=session['user_id'],
-            name=data['name'],
-            breed=data.get('breed', 'Raça indefinida'),
-            type=data.get('type', 'Cachorro'),
-            weight=data.get('weight', 0),
-            photo_url=data.get('photo_url')
-        )
-        db_session.add(new_pet)
-        db_session.commit()
-        return jsonify({"success": True, "pet_id": new_pet.id})
-    except Exception as e:
-        db_session.rollback()
-        print(f"❌ Erro ao criar pet: {str(e)}")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/pets/<int:pet_id>', methods=['PUT'])
-@login_required
-def update_pet(pet_id):
-    """Atualizar informações do pet"""
-    try:
-        data = request.json
-        pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
-        
-        if not pet:
-            return jsonify({"error": "Pet não encontrado"}), 404
-        
-        if 'weight' in data:
-            pet.weight = data['weight']
-        if 'breed' in data:
-            pet.breed = data['breed']
-        if 'name' in data:
-            pet.name = data['name']
-        if 'type' in data:
-            pet.type = data['type']
-            
-        db_session.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        db_session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/pets/<int:pet_id>', methods=['DELETE'])
-@login_required
-def delete_pet(pet_id):
-    """Deletar pet"""
-    try:
-        pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
-        
-        if not pet:
-            return jsonify({"error": "Pet não encontrado"}), 404
-        
-        db_session.delete(pet)
-        db_session.commit()
-        return jsonify({"success": True})
-    except Exception as e:
-        db_session.rollback()
-        return jsonify({"error": str(e)}), 500
-        import os
+import os
 from flask import Flask, render_template, request, jsonify, session
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -140,7 +77,7 @@ class Pet(Base):
     breed = Column(String(255))
     type = Column(String(100))
     weight = Column(Float)
-    photo_url = Column(Text)  # MUDADO: Text ao invés de String(500)
+    photo_url = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     
     user = relationship("User", back_populates="pets")
@@ -248,7 +185,7 @@ def get_user_info(user_id):
         }
     return None
 
-# ========== GEMINI API (CORRIGIDA) ==========
+# ========== GEMINI API ==========
 
 def call_gemini_api(prompt, images=None):
     """Chamada para Gemini 2.0 Flash com suporte a múltiplas imagens"""
@@ -258,21 +195,17 @@ def call_gemini_api(prompt, images=None):
     if not GEMINI_API_KEY:
         return "❌ GEMINI_API_KEY não configurada!"
 
-    # Modelo correto que está funcionando
     model = "gemini-2.0-flash-exp"
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
     
-    # Preparar partes do conteúdo
     parts = [{"text": prompt}]
     
-    # Adicionar imagens se houver
     if images:
         if not isinstance(images, list):
             images = [images]
         
         for img in images:
             if img:
-                # Extrair MIME type e dados base64
                 if "," in img:
                     mime_type = img.split(";")[0].split(":")[1]
                     base64_data = img.split(",")[1]
@@ -376,32 +309,22 @@ def login():
         email = data.get('email')
         password = data.get('password')
         
-        print(f"🔐 Tentativa de login para: {email}")
-        
         if not email or not password:
             return jsonify({"error": "Email e senha são obrigatórios"}), 400
         
-        # Buscar usuário por email primeiro
         user = db_session.query(User).filter_by(email=email).first()
         
         if not user:
-            print(f"❌ Usuário não encontrado: {email}")
             return jsonify({"error": "Email ou senha incorretos"}), 401
         
-        # Verificar senha
         hashed_input = hash_password(password)
-        print(f"🔑 Hash armazenado: {user.password[:20]}...")
-        print(f"🔑 Hash fornecido: {hashed_input[:20]}...")
         
         if user.password != hashed_input:
-            print(f"❌ Senha incorreta para: {email}")
             return jsonify({"error": "Email ou senha incorretos"}), 401
         
         session['user_id'] = user.id
         session['email'] = email
-        session.permanent = True  # Tornar sessão permanente
-        
-        print(f"✅ Login bem-sucedido: {email}")
+        session.permanent = True
         
         return jsonify({
             "success": True,
@@ -416,8 +339,6 @@ def login():
         })
     except Exception as e:
         print(f"❌ Erro no login: {str(e)}")
-        import traceback
-        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/logout', methods=['POST'])
@@ -442,7 +363,7 @@ def chat():
     try:
         data = request.json
         prompt = data.get('prompt')
-        images = data.get('images', [])  # Agora aceita múltiplas imagens
+        images = data.get('images', [])
         
         if not prompt:
             return jsonify({"error": "Prompt é obrigatório"}), 400
@@ -472,7 +393,6 @@ def get_pets():
     pets = db_session.query(Pet).filter_by(user_id=session['user_id']).all()
     result = []
     for p in pets:
-        # Contar refeições dos últimos 7 dias
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
         meals = db_session.query(Meal).filter(
             Meal.pet_id == p.id,
@@ -490,10 +410,30 @@ def get_pets():
         })
     return jsonify(result)
 
+@app.route('/api/pets', methods=['POST'])
+@login_required
+def create_pet():
+    try:
+        data = request.json
+        new_pet = Pet(
+            user_id=session['user_id'],
+            name=data['name'],
+            breed=data.get('breed', 'Raça indefinida'),
+            type=data.get('type', 'Cachorro'),
+            weight=data.get('weight', 0),
+            photo_url=data.get('photo_url')
+        )
+        db_session.add(new_pet)
+        db_session.commit()
+        return jsonify({"success": True, "pet_id": new_pet.id})
+    except Exception as e:
+        db_session.rollback()
+        print(f"❌ Erro ao criar pet: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/pets/<int:pet_id>', methods=['PUT'])
 @login_required
 def update_pet(pet_id):
-    """Atualizar informações do pet"""
     try:
         data = request.json
         pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
@@ -519,7 +459,6 @@ def update_pet(pet_id):
 @app.route('/api/pets/<int:pet_id>', methods=['DELETE'])
 @login_required
 def delete_pet(pet_id):
-    """Deletar pet"""
     try:
         pet = db_session.query(Pet).filter_by(id=pet_id, user_id=session['user_id']).first()
         
@@ -538,20 +477,17 @@ def delete_pet(pet_id):
 @app.route('/api/meals/<int:pet_id>', methods=['GET'])
 @login_required
 def get_meals(pet_id):
-    """Retorna refeições dos últimos 7 dias"""
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     meals = db_session.query(Meal).filter(
         Meal.pet_id == pet_id,
         Meal.timestamp >= seven_days_ago
     ).all()
     
-    # Agrupar por dia
     meals_by_day = {}
     for meal in meals:
         day = meal.timestamp.strftime('%Y-%m-%d')
         meals_by_day[day] = meals_by_day.get(day, 0) + 1
     
-    # Criar array dos últimos 7 dias
     result = []
     for i in range(6, -1, -1):
         day = (datetime.utcnow() - timedelta(days=i)).strftime('%Y-%m-%d')
@@ -716,33 +652,6 @@ def test_gemini():
         "api_key_preview": GEMINI_API_KEY[:10] + "..." if GEMINI_API_KEY else "NOT SET",
         "database": "PostgreSQL" if "postgresql" in DATABASE_URL else "SQLite"
     })
-
-# ========== ROTAS DE DEBUG (REMOVER EM PRODUÇÃO) ==========
-
-# ATENÇÃO: Estas rotas expõem dados sensíveis! 
-# Comente ou remova antes de fazer deploy em produção!
-
-# @app.route('/api/debug/users', methods=['GET'])
-# def debug_users():
-#     """Rota de debug para ver usuários cadastrados"""
-#     users = db_session.query(User).all()
-#     return jsonify([{
-#         "id": u.id,
-#         "email": u.email,
-#         "name": u.name,
-#         "password_hash": u.password[:20] + "...",
-#         "is_premium": u.is_premium,
-#         "points": u.points
-#     } for u in users])
-
-# @app.route('/api/debug/session', methods=['GET'])
-# def debug_session():
-#     """Rota de debug para verificar sessão"""
-#     return jsonify({
-#         "session_data": dict(session),
-#         "user_id": session.get('user_id'),
-#         "email": session.get('email')
-#     })
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

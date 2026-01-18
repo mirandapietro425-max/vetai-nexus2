@@ -148,7 +148,7 @@
             <button onclick="showView('login')" class="btn-gradient text-white px-6 py-2 rounded-full font-bold">Entrar</button>
         </nav>
 
-        <main class="pt-40 px-8 max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+        <main class="pt-40 px-8 max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center pb-20">
             <div class="space-y-8 text-center lg:text-left">
                 <div class="inline-flex items-center gap-2 px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-bold text-sm">
                     <span class="relative flex h-3 w-3">
@@ -167,15 +167,6 @@
             <div class="relative">
                 <div class="absolute -top-10 -left-10 w-40 h-40 bg-purple-200 rounded-full blur-3xl opacity-50"></div>
                 <img src="https://images.unsplash.com/photo-1516734212186-a967f81ad0d7?w=800" class="relative rounded-[3rem] shadow-2xl z-10" alt="Pet care">
-                <div class="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-xl z-20 neo-card">
-                    <div class="flex items-center gap-4">
-                        <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center"><i class="fas fa-check"></i></div>
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase">Saúde do Pet</p>
-                            <p class="font-black">Excelente</p>
-                        </div>
-                    </div>
-                </div>
             </div>
         </main>
     </div>
@@ -284,7 +275,7 @@
                     <button onclick="toggleModal('pet-modal', true)" class="btn-gradient text-white px-8 py-4 rounded-2xl font-bold shadow-lg">Cadastrar meu Bichinho</button>
                 </div>
 
-                <div id="tutor-active-state" class="hidden space-y-8 animate-in fade-in duration-500">
+                <div id="tutor-active-state" class="hidden space-y-8">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="neo-card p-6 flex items-center gap-6 bg-white">
                             <img id="active-pet-img" class="pet-photo-preview bg-slate-100" src="">
@@ -317,7 +308,19 @@
                 </div>
             </div>
 
-            <div id="content-nutriscan" class="tab-content hidden animate-in slide-in-from-right duration-300">
+            <div id="content-vaccines" class="tab-content hidden">
+                 <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-4xl font-black">Cartão de Vacinação</h2>
+                    <button onclick="toggleModal('vaccine-modal', true)" class="btn-gradient text-white px-6 py-3 rounded-2xl font-bold shadow-md">
+                        <i class="fas fa-plus mr-2"></i>Adicionar Vacina
+                    </button>
+                 </div>
+                 <div id="vaccines-list" class="grid gap-4">
+                    <p class="text-slate-400 text-center py-20">Nenhuma vacina cadastrada ainda.</p>
+                 </div>
+            </div>
+
+            <div id="content-nutriscan" class="tab-content hidden">
                 <h2 class="text-4xl font-black mb-8">NutriScan IA <span class="text-lg font-bold text-purple-400">beta</span></h2>
                 <div class="grid lg:grid-cols-2 gap-8">
                     <div class="neo-card p-8 bg-white space-y-4">
@@ -326,14 +329,87 @@
                         <button onclick="updateWeight()" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Salvar Peso</button>
                     </div>
                     <div class="neo-card p-8 bg-white space-y-4">
-                        <label class="font-bold text-sm text-slate-400 uppercase">2. Foto do Pet + Tabela Nutricional</label>
+                        <label class="font-bold text-sm text-slate-400 uppercase">2. Fotos para Análise</label>
                         <div class="image-upload-grid">
-                            <!-- Pet Photo -->
                             <div class="image-preview-box" onclick="document.getElementById('pet-body-upload').click()">
                                 <img id="pet-body-preview" class="hidden" alt="Pet">
                                 <div id="pet-body-placeholder" class="w-full h-full flex flex-col items-center justify-center text-slate-300">
                                     <i class="fas fa-dog text-3xl mb-2"></i>
                                     <p class="text-xs font-bold">Foto do Pet</p>
+                                </div>
+                                <div class="remove-btn" onclick="event.stopPropagation(); removePetBodyImage()">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                            <div class="image-preview-box" onclick="document.getElementById('kibble-upload').click()">
+                                <img id="kibble-preview" class="hidden" alt="Ração">
+                                <div id="kibble-placeholder" class="w-full h-full flex flex-col items-center justify-center text-slate-300">
+                                    <i class="fas fa-barcode text-3xl mb-2"></i>
+                                    <p class="text-xs font-bold">Rótulo da Ração</p>
+                                </div>
+                                <div class="remove-btn" onclick="event.stopPropagation(); removeKibbleImage()">
+                                    <i class="fas fa-times"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <input type="file" id="pet-body-upload" accept="image/*" class="hidden" onchange="previewPetBody(this)">
+                        <input type="file" id="kibble-upload" accept="image/*" class="hidden" onchange="previewKibble(this)">
+                        <button onclick="analyzeKibble()" id="btn-analyze-kibble" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Analisar com IA (5 pontos)</button>
+                    </div>
+                </div>
+                <div id="nutri-result" class="hidden mt-8 p-8 neo-card bg-indigo-50 border-indigo-200">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center"><i class="fas fa-robot"></i></div>
+                        <h3 class="font-black text-xl text-indigo-900">Recomendação Nexus</h3>
+                    </div>
+                    <div id="nutri-text" class="text-indigo-900 leading-relaxed markdown-content"></div>
+                </div>
+            </div>
+
+            <div id="content-curiosities" class="tab-content hidden">
+                <h2 class="text-4xl font-black mb-8">Curiosidades da Raça</h2>
+                <div id="curiosity-box" class="neo-card p-10 bg-white min-h-[400px]">
+                    <div id="curiosity-loading" class="hidden space-y-4">
+                        <div class="h-8 w-1/2 loading-shimmer rounded-lg"></div>
+                        <div class="h-24 w-full loading-shimmer rounded-lg"></div>
+                        <div class="h-10 w-1/3 loading-shimmer rounded-lg"></div>
+                    </div>
+                    <div id="curiosity-data" class="space-y-6 markdown-content">
+                        <p class="text-slate-400 font-medium">Cadastre seu pet para descobrir a história e os segredos da sua raça.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-consultation" class="tab-content hidden">
+                <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-8 gap-4">
+                    <h2 class="text-4xl font-black">Triagem IA</h2>
+                    <span class="px-4 py-2 bg-purple-100 text-purple-600 rounded-full font-bold text-xs uppercase">Processador: Gemini 2.0 Flash</span>
+                </div>
+                <div class="grid lg:grid-cols-5 gap-8">
+                    <div class="lg:col-span-3 space-y-6">
+                        <div class="neo-card p-8 bg-white">
+                            <h3 class="font-bold mb-4">O que está acontecendo?</h3>
+                            <textarea id="ai-symptoms" class="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl h-48 focus:border-purple-300 outline-none transition-all resize-none" placeholder="Ex: Meu pet está mancando da pata traseira esquerda..."></textarea>
+                            
+                            <label class="font-bold text-sm text-slate-400 uppercase mt-6 block">Fotos do Pet (até 4)</label>
+                            <div class="grid grid-cols-4 gap-3 mt-3">
+                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-1').click()">
+                                    <img id="consult-preview-1" class="hidden" alt="">
+                                    <div id="consult-placeholder-1" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(1)">
+                                        <i class="fas fa-times"></i>
+                                    </div>
+                                </div>
+                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-2').click()">
+                                    <img id="consult-preview-2" class="hidden" alt="">
+                                    <div id="consult-placeholder-2" class="w-full h-full flex items-center justify-center text-slate-300">
+                                        <i class="fas fa-camera"></i>
+                                    </div>
+                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(2)">
+                                        <i class="fas fa-times"></i>
+                                    </div>
                                 </div>
                                 <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-3').click()">
                                     <img id="consult-preview-3" class="hidden" alt="">
@@ -363,7 +439,7 @@
                                 <i class="fas fa-microchip"></i> Iniciar Análise Nexus (5 pontos)
                             </button>
                         </div>
-                        <div id="ai-result" class="hidden p-8 neo-card bg-white border-slate-100 shadow-sm transition-all duration-500">
+                        <div id="ai-result" class="hidden p-8 neo-card bg-white">
                             <div id="urgency-badge" class="inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4"></div>
                             <div id="consult-text" class="text-slate-700 leading-relaxed markdown-content"></div>
                         </div>
@@ -371,7 +447,7 @@
                     <div class="lg:col-span-2 space-y-6">
                         <div class="neo-card p-6 bg-purple-600 text-white">
                             <h4 class="font-black text-lg mb-2"><i class="fas fa-info-circle mr-2"></i>Como funciona</h4>
-                            <p class="text-sm opacity-90 leading-relaxed">Nossa IA analisa os sintomas e fotos baseada em protocolos veterinários mundiais para indicar o nível de prioridade e preparar você para a consulta.</p>
+                            <p class="text-sm opacity-90 leading-relaxed">Nossa IA analisa os sintomas e fotos baseada em protocolos veterinários mundiais para indicar o nível de prioridade.</p>
                         </div>
                         <div class="neo-card p-6 bg-red-50 border-red-100">
                             <h4 class="font-black text-red-800 text-lg mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Atenção</h4>
@@ -380,24 +456,12 @@
                     </div>
                 </div>
             </div>
-
-            <div id="content-vaccines" class="tab-content hidden">
-                 <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-4xl font-black">Cartão de Vacinação</h2>
-                    <button onclick="toggleModal('vaccine-modal', true)" class="btn-gradient text-white px-6 py-3 rounded-2xl font-bold shadow-md">
-                        <i class="fas fa-plus mr-2"></i>Adicionar Vacina
-                    </button>
-                 </div>
-                 <div id="vaccines-list" class="grid gap-4">
-                    <p class="text-slate-400 text-center py-20">Nenhuma vacina cadastrada ainda.</p>
-                 </div>
-            </div>
         </main>
     </div>
 
     <!-- MODAL CADASTRAR PET -->
     <div id="pet-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <div class="bg-white w-full max-w-md rounded-[2.5rem] p-10 shadow-2xl">
             <h3 class="text-2xl font-black mb-6 text-center">Perfil do Pet</h3>
             <div class="space-y-4">
                 <div class="flex flex-col items-center mb-4">
@@ -463,7 +527,7 @@
 
     <!-- PREMIUM MODAL -->
     <div id="premium-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] hidden items-center justify-center p-4">
-        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <div class="bg-white w-full max-w-2xl rounded-[2.5rem] p-10 shadow-2xl">
             <div class="text-center mb-8">
                 <div class="w-20 h-20 mx-auto mb-4 premium-shine rounded-full flex items-center justify-center text-white text-3xl">
                     <i class="fas fa-crown"></i>
@@ -521,8 +585,7 @@
         let consultImages = [null, null, null, null];
         let feedingChart = null;
 
-        // --- Core UI Functions ---
-
+        // === CORE UI ===
         function showView(id) {
             document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
             document.getElementById('view-' + id).classList.remove('hidden');
@@ -542,18 +605,10 @@
             activeBtn.classList.remove('text-slate-400');
             
             if(tabId === 'curiosities' && currentPet) loadCuriosities();
-            if(tabId === 'dashboard' && currentPet) {
-                setTimeout(loadMealsAndChart, 100);
-            }
-            if(tabId === 'vaccines' && currentPet) {
-                loadVaccines();
-            }
-            if(tabId === 'nutriscan') {
-                document.getElementById('nutri-result').classList.add('hidden');
-            }
-            if(tabId === 'consultation') {
-                document.getElementById('ai-result').classList.add('hidden');
-            }
+            if(tabId === 'dashboard' && currentPet) setTimeout(loadMealsAndChart, 100);
+            if(tabId === 'vaccines' && currentPet) loadVaccines();
+            if(tabId === 'nutriscan') document.getElementById('nutri-result').classList.add('hidden');
+            if(tabId === 'consultation') document.getElementById('ai-result').classList.add('hidden');
         }
 
         function toggleModal(id, show) {
@@ -580,7 +635,6 @@
 
         function updateUserUI() {
             if (!currentUser) return;
-            
             document.getElementById('user-name-display').innerText = currentUser.name || 'Tutor';
             document.getElementById('points-display').innerText = currentUser.points;
             
@@ -593,8 +647,7 @@
             }
         }
 
-        // --- Authentication ---
-
+        // === AUTH ===
         async function handleRegister() {
             const name = document.getElementById('register-name').value;
             const email = document.getElementById('register-email').value;
@@ -611,23 +664,213 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
-                
-                if (response.ok) {
-                    toggleModal('vaccine-modal', false);
-                    document.getElementById('vaccine-name').value = '';
-                    document.getElementById('vaccine-date').value = '';
-                    showToast('Vacina cadastrada!');
-                    loadVaccines();
-                    loadNextVaccine();
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showToast(data.error || 'Erro no cadastro', true);
+                    return;
                 }
+
+                currentUser = data.user;
+                updateUserUI();
+                showView('tutor-dash');
+                showToast('✨ Conta criada! Você ganhou 50 pontos!');
+                loadUserPets();
             } catch (error) {
-                showToast('Erro ao salvar vacina', true);
+                showToast('Erro ao conectar', true);
             }
         }
 
-        async function applyVaccine(vaccineId) {
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showToast('Preencha email e senha!', true);
+                return;
+            }
+
             try {
-                const response = await fetch(`/api/vaccines/${vaccineId}/apply`, {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    showToast(data.error || 'Erro no login', true);
+                    return;
+                }
+
+                currentUser = data.user;
+                updateUserUI();
+                showView('tutor-dash');
+                showToast('Bem-vindo de volta!');
+                loadUserPets();
+            } catch (error) {
+                showToast('Erro: ' + error.message, true);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                currentUser = null;
+                currentPet = null;
+                showView('landing');
+                showToast('Até logo!');
+            } catch (error) {
+                showToast('Erro ao deslogar', true);
+            }
+        }
+
+        // === API GEMINI ===
+        async function callGemini(prompt, images = null) {
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, images })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    if (data.upgrade_required) {
+                        showToast(`Você precisa de ${data.points_needed} pontos (tem ${data.points_available})`, true);
+                        setTimeout(() => showPremiumModal(), 500);
+                        return null;
+                    }
+                    throw new Error(data.error);
+                }
+                
+                if (currentUser) {
+                    currentUser.points = data.points_remaining;
+                    updateUserUI();
+                }
+                
+                return data.result;
+            } catch (error) {
+                showToast('Erro na IA: ' + error.message, true);
+                return null;
+            }
+        }
+
+        // === PETS ===
+        async function loadUserPets() {
+            try {
+                const response = await fetch('/api/pets');
+                const pets = await response.json();
+                
+                allPets = pets;
+                
+                if (pets.length > 0) {
+                    currentPet = pets[0];
+                    document.getElementById('tutor-empty-state').classList.add('hidden');
+                    document.getElementById('tutor-active-state').classList.remove('hidden');
+                    updatePetDisplay();
+                    loadMealsAndChart();
+                    loadNextVaccine();
+                } else {
+                    document.getElementById('tutor-empty-state').classList.remove('hidden');
+                    document.getElementById('tutor-active-state').classList.add('hidden');
+                }
+            } catch (error) {
+                console.error('Erro ao carregar pets:', error);
+            }
+        }
+
+        function updatePetDisplay() {
+            if (!currentPet) return;
+            document.getElementById('active-pet-name').innerText = currentPet.name;
+            document.getElementById('active-pet-info').innerText = `${currentPet.type} • ${currentPet.breed}`;
+            document.getElementById('active-pet-weight-display').innerText = `Peso: ${currentPet.weight}kg`;
+            document.getElementById('active-pet-img').src = currentPet.photo_url || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
+            document.getElementById('scan-weight').value = currentPet.weight;
+        }
+
+        async function handlePetPhoto(input) {
+            if (input.files?.[0]) {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    const preview = document.getElementById('upload-preview');
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    document.getElementById('cam-icon').classList.add('hidden');
+
+                    document.getElementById('breed-loader').classList.remove('hidden');
+                    const breedPrompt = "Seja direto. Analise esta foto e identifique apenas a raça predominante do pet. Responda apenas o nome da raça, sem explicações.";
+                    const detectedBreed = await callGemini(breedPrompt, [e.target.result]);
+                    
+                    if (detectedBreed) {
+                        document.getElementById('new-pet-breed').value = detectedBreed.replace(/[#*]/g, '').trim();
+                        showToast("IA identificou a raça!");
+                    }
+                    document.getElementById('breed-loader').classList.add('hidden');
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function savePet() {
+            const name = document.getElementById('new-pet-name').value;
+            const breed = document.getElementById('new-pet-breed').value;
+            const weight = document.getElementById('new-pet-weight').value;
+            const type = document.getElementById('new-pet-type').value;
+            const photo = document.getElementById('upload-preview').src;
+
+            if(!name || !weight) {
+                showToast("Nome e peso são obrigatórios!", true);
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/pets', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name,
+                        breed: breed || "Raça indefinida",
+                        type,
+                        weight: parseFloat(weight),
+                        photo_url: photo
+                    })
+                });
+
+                if (!response.ok) throw new Error('Erro ao salvar pet');
+                await loadUserPets();
+                toggleModal('pet-modal', false);
+                showToast("Perfil criado!");
+            } catch (error) {
+                showToast('Erro ao salvar pet', true);
+            }
+        }
+
+        // === MEALS ===
+        async function loadMealsAndChart() {
+            if (!currentPet) return;
+            
+            try {
+                const response = await fetch(`/api/meals/${currentPet.id}`);
+                const mealsData = await response.json();
+                
+                const todayMeals = mealsData[mealsData.length - 1];
+                document.getElementById('meal-count-text').innerText = `Refeições hoje: ${todayMeals}`;
+                initChart(mealsData);
+            } catch (error) {
+                console.error('Erro ao carregar refeições:', error);
+            }
+        }
+
+        async function addMeal() {
+            if (!currentPet) return;
+            
+            try {
+                const response = await fetch(`/api/meals/${currentPet.id}`, {
                     method: 'POST'
                 });
                 
@@ -681,8 +924,7 @@
             }
         }
 
-        // --- NutriScan ---
-
+        // === NUTRISCAN ===
         async function updateWeight() {
             const w = document.getElementById('scan-weight').value;
             if(w && currentPet) {
@@ -696,13 +938,9 @@
                     if (response.ok) {
                         currentPet.weight = parseFloat(w);
                         document.getElementById('active-pet-weight-display').innerText = `Peso: ${w}kg`;
-                        showToast("Peso atualizado no banco!");
-                        
-                        // Atualizar na lista de pets também
+                        showToast("Peso atualizado!");
                         const petIndex = allPets.findIndex(p => p.id === currentPet.id);
-                        if (petIndex !== -1) {
-                            allPets[petIndex].weight = parseFloat(w);
-                        }
+                        if (petIndex !== -1) allPets[petIndex].weight = parseFloat(w);
                     }
                 } catch (error) {
                     showToast('Erro ao atualizar peso', true);
@@ -715,9 +953,8 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     petBodyImage = e.target.result;
-                    const prev = document.getElementById('pet-body-preview');
-                    prev.src = e.target.result;
-                    prev.classList.remove('hidden');
+                    document.getElementById('pet-body-preview').src = e.target.result;
+                    document.getElementById('pet-body-preview').classList.remove('hidden');
                     document.getElementById('pet-body-placeholder').classList.add('hidden');
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -736,9 +973,8 @@
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     kibbleImage = e.target.result;
-                    const prev = document.getElementById('kibble-preview');
-                    prev.src = e.target.result;
-                    prev.classList.remove('hidden');
+                    document.getElementById('kibble-preview').src = e.target.result;
+                    document.getElementById('kibble-preview').classList.remove('hidden');
                     document.getElementById('kibble-placeholder').classList.add('hidden');
                 };
                 reader.readAsDataURL(input.files[0]);
@@ -757,7 +993,6 @@
                 showToast("Envie pelo menos uma foto!", true);
                 return;
             }
-            
             if (!currentPet) {
                 showToast("Cadastre seu pet primeiro!", true);
                 return;
@@ -771,52 +1006,34 @@
             if (petBodyImage) images.push(petBodyImage);
             if (kibbleImage) images.push(kibbleImage);
 
-            const prompt = `Você é um nutricionista veterinário especializado. Analise as imagens fornecidas.
+            const prompt = `Você é um nutricionista veterinário. Analise as imagens.
             
-            ${petBodyImage ? '📸 IMAGEM DO PET: Avalie o tamanho, condição corporal (magro/ideal/acima do peso) e porte do animal.' : ''}
-            ${kibbleImage ? '📋 RÓTULO DA RAÇÃO: Analise a tabela nutricional e ingredientes.' : ''}
+${petBodyImage ? '📸 IMAGEM DO PET: Avalie condição corporal e porte.' : ''}
+${kibbleImage ? '📋 RÓTULO: Analise tabela nutricional.' : ''}
             
-            INFORMAÇÕES DO PET:
-            - Espécie: ${currentPet.type}
-            - Raça: ${currentPet.breed}
-            - Peso atual: ${currentPet.weight}kg
+INFO PET: ${currentPet.type}, ${currentPet.breed}, ${currentPet.weight}kg
             
-            Por favor forneça:
-            
-            1. **Avaliação da Condição Corporal** (se houver foto do pet)
-            2. **Gramatura Diária Recomendada**
-               - Total por dia
-               - Dividido em quantas refeições
-               - Gramas por refeição
-            
-            3. **Análise Nutricional da Ração** (se houver rótulo)
-               - Qualidade dos ingredientes
-               - Adequação para o porte/raça
-               - Principais nutrientes e benefícios
-            
-            4. **Recomendações Adicionais**
-            
-            Seja objetivo, profissional e use formatação clara com negrito nos títulos.`;
+Forneça:
+1. Avaliação Corporal
+2. Gramatura Diária Recomendada
+3. Análise Nutricional da Ração
+4. Recomendações
+
+Use negrito nos títulos.`;
 
             const result = await callGemini(prompt, images);
             
             if (result) {
                 document.getElementById('nutri-result').classList.remove('hidden');
                 document.getElementById('nutri-text').innerHTML = parseMarkdown(result);
-                
-                // Scroll suave para o resultado
-                document.getElementById('nutri-result').scrollIntoView({ 
-                    behavior: 'smooth', 
-                    block: 'start' 
-                });
+                document.getElementById('nutri-result').scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
             
             btn.innerHTML = 'Analisar com IA (5 pontos)';
             btn.disabled = false;
         }
 
-        // --- Curiosities ---
-
+        // === CURIOSITIES ===
         async function loadCuriosities() {
             if (!currentPet) return;
             
@@ -826,31 +1043,24 @@
             box.classList.add('hidden');
             loader.classList.remove('hidden');
 
-            const prompt = `Gere 3 curiosidades fascinantes e pouco conhecidas sobre a raça ${currentPet.breed} (${currentPet.type}). 
-            Inclua uma dica de comportamento específica. Use ícones emoji e tom amigável.`;
-            
+            const prompt = `Gere 3 curiosidades fascinantes sobre a raça ${currentPet.breed} (${currentPet.type}). Use emojis e tom amigável.`;
             const result = await callGemini(prompt);
             
-            if (result) {
-                box.innerHTML = parseMarkdown(result);
-            }
+            if (result) box.innerHTML = parseMarkdown(result);
             
             loader.classList.add('hidden');
             box.classList.remove('hidden');
         }
 
-        // --- Consultation with Multiple Images ---
-
+        // === CONSULTATION ===
         function handleConsultImage(input, index) {
             if (input.files?.[0]) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     consultImages[index - 1] = e.target.result;
-                    const preview = document.getElementById(`consult-preview-${index}`);
-                    const placeholder = document.getElementById(`consult-placeholder-${index}`);
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
+                    document.getElementById(`consult-preview-${index}`).src = e.target.result;
+                    document.getElementById(`consult-preview-${index}`).classList.remove('hidden');
+                    document.getElementById(`consult-placeholder-${index}`).classList.add('hidden');
                 };
                 reader.readAsDataURL(input.files[0]);
             }
@@ -858,101 +1068,60 @@
 
         function removeConsultImage(index) {
             consultImages[index - 1] = null;
-            const preview = document.getElementById(`consult-preview-${index}`);
-            const placeholder = document.getElementById(`consult-placeholder-${index}`);
-            preview.classList.add('hidden');
-            placeholder.classList.remove('hidden');
+            document.getElementById(`consult-preview-${index}`).classList.add('hidden');
+            document.getElementById(`consult-placeholder-${index}`).classList.remove('hidden');
             document.getElementById(`consult-img-${index}`).value = '';
         }
 
         async function runConsultation() {
             const symptoms = document.getElementById('ai-symptoms').value;
             if(!symptoms) {
-                showToast("Descreva o que seu pet sente.", true);
+                showToast("Descreva os sintomas.", true);
                 return;
             }
-            
             if (!currentPet) {
                 showToast("Cadastre seu pet primeiro!", true);
                 return;
             }
 
             const btn = document.getElementById('btn-consult');
-            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Analisando Quadro Clínico...';
+            btn.innerHTML = '<i class="fas fa-circle-notch animate-spin"></i> Analisando...';
             btn.disabled = true;
 
-            // Filtrar apenas imagens que foram adicionadas
             const activeImages = consultImages.filter(img => img !== null);
 
-            const prompt = `Você é um assistente veterinário experiente realizando uma triagem inicial.
+            const prompt = `Assistente veterinário - triagem inicial.
 
-═══════════════════════════════════════
-📋 INFORMAÇÕES DO CASO
-═══════════════════════════════════════
+🐾 PACIENTE: ${currentPet.type}, ${currentPet.breed}, ${currentPet.weight}kg
+😟 SINTOMAS: ${symptoms}
+${activeImages.length > 0 ? `📸 IMAGENS: ${activeImages.length} foto(s)` : ''}
 
-🐾 PACIENTE:
-• Espécie: ${currentPet.type}
-• Raça: ${currentPet.breed}
-• Peso: ${currentPet.weight}kg
-
-😟 SINTOMAS RELATADOS:
-${symptoms}
-
-${activeImages.length > 0 ? `📸 IMAGENS ANEXADAS: ${activeImages.length} foto(s) do pet` : '📸 IMAGENS: Não fornecidas'}
-
-═══════════════════════════════════════
-🎯 ANÁLISE SOLICITADA
-═══════════════════════════════════════
-
-Por favor realize uma triagem veterinária completa:
-
+Forneça:
 **URGÊNCIA: [BAIXO/MÉDIO/ALTO/CRÍTICO]**
 
-1. **Possíveis Causas**
-   - Liste 2-3 causas mais prováveis
-   - ${activeImages.length > 0 ? 'Considere as imagens fornecidas' : ''}
-   
-2. **Sinais de Alerta** ⚠️
-   - Sintomas que indicam urgência
-   - Quando procurar emergência IMEDIATAMENTE
-   
-3. **Perguntas para o Veterinário**
-   - 3-5 perguntas específicas que o tutor deve fazer
-   
-4. **Primeiros Cuidados em Casa**
-   - O que fazer enquanto aguarda consulta
-   - O que NÃO fazer
-   
-5. **Recomendação de Consulta**
-   - Prazo recomendado para atendimento
+1. Possíveis Causas
+2. Sinais de Alerta
+3. Perguntas para o Veterinário
+4. Primeiros Cuidados
+5. Recomendação de Consulta
 
-═══════════════════════════════════════
-
-**IMPORTANTE**: 
-- Seja claro sobre o nível de urgência
-- Não dê diagnóstico definitivo
-- Sempre recomende consulta veterinária
-- Se CRÍTICO: indique procurar emergência AGORA
-
-Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
+Inicie SEMPRE com "URGÊNCIA: [NÍVEL]".`;
 
             const result = await callGemini(prompt, activeImages.length > 0 ? activeImages : null);
             
             if (result) {
                 const resultDiv = document.getElementById('ai-result');
                 const badge = document.getElementById('urgency-badge');
-                
                 resultDiv.classList.remove('hidden');
                 
-                // Determinar urgência e estilo
                 const upperResult = result.toUpperCase();
-                if(upperResult.includes('URGÊNCIA: CRÍTICO') || upperResult.includes('CRÍTICO')) {
+                if(upperResult.includes('CRÍTICO')) {
                     badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-red-600 text-white pulse-urgent";
                     badge.innerText = "🚨 URGÊNCIA CRÍTICA - EMERGÊNCIA!";
-                } else if(upperResult.includes('URGÊNCIA: ALTO') || upperResult.includes('ALTO')) {
+                } else if(upperResult.includes('ALTO')) {
                     badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-red-100 text-red-600 pulse-urgent";
                     badge.innerText = "⚠️ Urgência Alta";
-                } else if(upperResult.includes('URGÊNCIA: MÉDIO') || upperResult.includes('MÉDIO')) {
+                } else if(upperResult.includes('MÉDIO')) {
                     badge.className = "inline-block px-4 py-2 rounded-full text-xs font-black uppercase mb-4 bg-amber-100 text-amber-600";
                     badge.innerText = "⚠️ Atenção Moderada";
                 } else {
@@ -968,8 +1137,7 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
             btn.disabled = false;
         }
 
-        // --- Premium/Stripe ---
-
+        // === PREMIUM ===
         async function initPremiumCheckout() {
             const btn = document.getElementById('btn-premium-checkout');
             btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i> Preparando...';
@@ -983,9 +1151,7 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
 
                 const data = await response.json();
 
-                if (!response.ok) {
-                    throw new Error(data.error);
-                }
+                if (!response.ok) throw new Error(data.error);
 
                 window.location.href = data.checkout_url;
             } catch (error) {
@@ -995,7 +1161,7 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
             }
         }
 
-        // --- Helper: Simple Markdown Parser ---
+        // === HELPERS ===
         function parseMarkdown(text) {
             return text
                 .replace(/^# (.*$)/gim, '<h1>$1</h1>')
@@ -1006,247 +1172,12 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
                 .replace(/\n/gim, '<br>');
         }
 
-        // Initialize
         window.onload = () => {
             console.log("✅ Nexus Ecosystem Online - v2.0");
         };
     </script>
 </body>
 </html>
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    showToast(data.error || 'Erro no cadastro', true);
-                    return;
-                }
-
-                currentUser = data.user;
-                updateUserUI();
-                showView('tutor-dash');
-                showToast('✨ Conta criada! Você ganhou 50 pontos!');
-            } catch (error) {
-                showToast('Erro ao conectar com servidor', true);
-            }
-        }
-
-        async function handleLogin() {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
-            if (!email || !password) {
-                showToast('Preencha email e senha!', true);
-                return;
-            }
-
-            console.log('🔐 Tentando login com:', email);
-
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    credentials: 'include',
-                    body: JSON.stringify({ email, password })
-                });
-
-                console.log('📡 Resposta do servidor:', response.status);
-                const data = await response.json();
-                console.log('📦 Dados recebidos:', data);
-
-                if (!response.ok) {
-                    showToast(data.error || 'Erro no login', true);
-                    console.error('❌ Erro de login:', data);
-                    return;
-                }
-
-                currentUser = data.user;
-                console.log('✅ Login bem-sucedido:', currentUser);
-                updateUserUI();
-                showView('tutor-dash');
-                showToast('Bem-vindo de volta!');
-                loadUserPets();
-            } catch (error) {
-                console.error('❌ Exceção no login:', error);
-                showToast('Erro ao conectar com servidor: ' + error.message, true);
-            }
-        }
-
-        async function handleLogout() {
-            try {
-                await fetch('/api/logout', { method: 'POST' });
-                currentUser = null;
-                currentPet = null;
-                showView('landing');
-                showToast('Até logo!');
-            } catch (error) {
-                showToast('Erro ao deslogar', true);
-            }
-        }
-
-        // --- API Calls ---
-
-        async function callGemini(prompt, images = null) {
-            try {
-                const response = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, images })
-                });
-                
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    if (data.upgrade_required) {
-                        showToast(`Você precisa de ${data.points_needed} pontos (tem ${data.points_available})`, true);
-                        setTimeout(() => showPremiumModal(), 500);
-                        return null;
-                    }
-                    throw new Error(data.error);
-                }
-                
-                // Atualiza pontos no UI
-                if (currentUser) {
-                    currentUser.points = data.points_remaining;
-                    updateUserUI();
-                }
-                
-                return data.result;
-            } catch (error) {
-                showToast('Erro na chamada da IA: ' + error.message, true);
-                return null;
-            }
-        }
-
-        // --- Pet Functions ---
-
-        async function loadUserPets() {
-            try {
-                const response = await fetch('/api/pets');
-                const pets = await response.json();
-                
-                allPets = pets;
-                
-                if (pets.length > 0) {
-                    currentPet = pets[0];
-                    
-                    document.getElementById('tutor-empty-state').classList.add('hidden');
-                    document.getElementById('tutor-active-state').classList.remove('hidden');
-                    
-                    updatePetDisplay();
-                    loadMealsAndChart();
-                    loadNextVaccine();
-                } else {
-                    document.getElementById('tutor-empty-state').classList.remove('hidden');
-                    document.getElementById('tutor-active-state').classList.add('hidden');
-                }
-            } catch (error) {
-                console.error('Erro ao carregar pets:', error);
-            }
-        }
-
-        function updatePetDisplay() {
-            if (!currentPet) return;
-            
-            document.getElementById('active-pet-name').innerText = currentPet.name;
-            document.getElementById('active-pet-info').innerText = `${currentPet.type} • ${currentPet.breed}`;
-            document.getElementById('active-pet-weight-display').innerText = `Peso: ${currentPet.weight}kg`;
-            document.getElementById('active-pet-img').src = currentPet.photo_url || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200";
-            
-            // Atualizar peso no NutriScan
-            document.getElementById('scan-weight').value = currentPet.weight;
-        }
-
-        async function handlePetPhoto(input) {
-            if (input.files?.[0]) {
-                const reader = new FileReader();
-                reader.onload = async (e) => {
-                    const preview = document.getElementById('upload-preview');
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                    document.getElementById('cam-icon').classList.add('hidden');
-
-                    document.getElementById('breed-loader').classList.remove('hidden');
-                    const breedPrompt = "Seja direto. Analise esta foto e identifique apenas a raça predominante do pet. Responda apenas o nome da raça, sem explicações.";
-                    const detectedBreed = await callGemini(breedPrompt, [e.target.result]);
-                    
-                    if (detectedBreed) {
-                        document.getElementById('new-pet-breed').value = detectedBreed.replace(/[#*]/g, '').trim();
-                        showToast("IA identificou a raça!");
-                    }
-                    document.getElementById('breed-loader').classList.add('hidden');
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        async function savePet() {
-            const name = document.getElementById('new-pet-name').value;
-            const breed = document.getElementById('new-pet-breed').value;
-            const weight = document.getElementById('new-pet-weight').value;
-            const type = document.getElementById('new-pet-type').value;
-            const photo = document.getElementById('upload-preview').src;
-
-            if(!name || !weight) {
-                showToast("Nome e peso são obrigatórios!", true);
-                return;
-            }
-
-            try {
-                const response = await fetch('/api/pets', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        breed: breed || "Raça indefinida",
-                        type,
-                        weight: parseFloat(weight),
-                        photo_url: photo
-                    })
-                });
-
-                if (!response.ok) throw new Error('Erro ao salvar pet');
-
-                const data = await response.json();
-                
-                // Recarregar pets
-                await loadUserPets();
-                
-                toggleModal('pet-modal', false);
-                showToast("Perfil criado no Nexus!");
-            } catch (error) {
-                showToast('Erro ao salvar pet', true);
-            }
-        }
-
-        // --- Meals & Chart ---
-
-        async function loadMealsAndChart() {
-            if (!currentPet) return;
-            
-            try {
-                const response = await fetch(`/api/meals/${currentPet.id}`);
-                const mealsData = await response.json();
-                
-                // Atualizar contador do dia
-                const todayMeals = mealsData[mealsData.length - 1];
-                document.getElementById('meal-count-text').innerText = `Refeições hoje: ${todayMeals}`;
-                
-                // Atualizar gráfico
-                initChart(mealsData);
-            } catch (error) {
-                console.error('Erro ao carregar refeições:', error);
-            }
-        }
-
-        async function addMeal() {
-            if (!currentPet) return;
-            
-            try {
-                const response = await fetch(`/api/meals/${currentPet.id}`, {
-                    method: 'POST'
-                });
-                
-                if (response.ok) {
                     showToast("Refeição registrada!");
                     loadMealsAndChart();
                 }
@@ -1291,8 +1222,7 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
             });
         }
 
-        // --- Vaccines ---
-
+        // === VACCINES ===
         async function loadVaccines() {
             if (!currentPet) return;
             
@@ -1314,7 +1244,7 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
                         new Date(v.scheduled_date).toLocaleDateString('pt-BR');
                     
                     return `
-                        <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 ${isApplied ? 'border-emerald-500' : 'border-amber-500'} shadow-sm">
+                        <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 ${isApplied ? 'border-emerald-500' : 'border-amber-500'}">
                             <div>
                                 <h4 class="font-black">${v.name}</h4>
                                 <p class="text-sm text-slate-400 font-bold">${isApplied ? 'Aplicada' : 'Agendada'}: ${date}</p>
@@ -1346,85 +1276,26 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]" na primeira linha.`;
                 const response = await fetch(`/api/vaccines/${currentPet.id}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        name,
-                        scheduled_date: date
-                    })
+                    body: JSON.stringify({ name, scheduled_date: date })
+                });
                 
-                                <div class="remove-btn" onclick="event.stopPropagation(); removePetBodyImage()">
-                                    <i class="fas fa-times"></i>
-                                </div>
-                            </div>
-                            
-                            <!-- Kibble Label -->
-                            <div class="image-preview-box" onclick="document.getElementById('kibble-upload').click()">
-                                <img id="kibble-preview" class="hidden" alt="Ração">
-                                <div id="kibble-placeholder" class="w-full h-full flex flex-col items-center justify-center text-slate-300">
-                                    <i class="fas fa-barcode text-3xl mb-2"></i>
-                                    <p class="text-xs font-bold">Rótulo da Ração</p>
-                                </div>
-                                <div class="remove-btn" onclick="event.stopPropagation(); removeKibbleImage()">
-                                    <i class="fas fa-times"></i>
-                                </div>
-                            </div>
-                        </div>
-                        <input type="file" id="pet-body-upload" accept="image/*" class="hidden" onchange="previewPetBody(this)">
-                        <input type="file" id="kibble-upload" accept="image/*" class="hidden" onchange="previewKibble(this)">
-                        <button onclick="analyzeKibble()" id="btn-analyze-kibble" class="w-full btn-gradient text-white py-4 rounded-2xl font-bold shadow-md">Analisar com IA (5 pontos)</button>
-                    </div>
-                </div>
-                <div id="nutri-result" class="hidden mt-8 p-8 neo-card bg-indigo-50 border-indigo-200">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-8 h-8 bg-indigo-600 text-white rounded-lg flex items-center justify-center"><i class="fas fa-robot"></i></div>
-                        <h3 class="font-black text-xl text-indigo-900">Recomendação Nexus</h3>
-                    </div>
-                    <div id="nutri-text" class="text-indigo-900 leading-relaxed markdown-content"></div>
-                </div>
-            </div>
+                if (response.ok) {
+                    toggleModal('vaccine-modal', false);
+                    document.getElementById('vaccine-name').value = '';
+                    document.getElementById('vaccine-date').value = '';
+                    showToast('Vacina cadastrada!');
+                    loadVaccines();
+                    loadNextVaccine();
+                }
+            } catch (error) {
+                showToast('Erro ao salvar vacina', true);
+            }
+        }
 
-            <div id="content-curiosities" class="tab-content hidden animate-in slide-in-from-right duration-300">
-                <h2 class="text-4xl font-black mb-8">Curiosidades da Raça</h2>
-                <div id="curiosity-box" class="neo-card p-10 bg-white min-h-[400px]">
-                    <div id="curiosity-loading" class="hidden space-y-4">
-                        <div class="h-8 w-1/2 loading-shimmer rounded-lg"></div>
-                        <div class="h-24 w-full loading-shimmer rounded-lg"></div>
-                        <div class="h-10 w-1/3 loading-shimmer rounded-lg"></div>
-                    </div>
-                    <div id="curiosity-data" class="space-y-6 markdown-content">
-                        <p class="text-slate-400 font-medium">Cadastre seu pet para descobrir a história e os segredos da sua raça.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="content-consultation" class="tab-content hidden animate-in slide-in-from-right duration-300">
-                <div class="flex flex-col lg:flex-row justify-between lg:items-center mb-8 gap-4">
-                    <h2 class="text-4xl font-black">Triagem IA</h2>
-                    <div class="flex gap-2">
-                        <span class="px-4 py-2 bg-purple-100 text-purple-600 rounded-full font-bold text-xs uppercase">Processador: Gemini 2.0 Flash</span>
-                    </div>
-                </div>
-                <div class="grid lg:grid-cols-5 gap-8">
-                    <div class="lg:col-span-3 space-y-6">
-                        <div class="neo-card p-8 bg-white shadow-sm border-slate-100">
-                            <h3 class="font-bold mb-4">O que está acontecendo?</h3>
-                            <textarea id="ai-symptoms" class="w-full p-6 bg-slate-50 border border-slate-100 rounded-3xl h-48 focus:border-purple-300 outline-none transition-all resize-none" placeholder="Ex: Meu pet está mancando da pata traseira esquerda desde hoje cedo e parece sem apetite..."></textarea>
-                            
-                            <label class="font-bold text-sm text-slate-400 uppercase mt-6 block">Fotos do Pet (até 4)</label>
-                            <div class="grid grid-cols-4 gap-3 mt-3">
-                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-1').click()">
-                                    <img id="consult-preview-1" class="hidden" alt="">
-                                    <div id="consult-placeholder-1" class="w-full h-full flex items-center justify-center text-slate-300">
-                                        <i class="fas fa-camera"></i>
-                                    </div>
-                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(1)">
-                                        <i class="fas fa-times"></i>
-                                    </div>
-                                </div>
-                                <div class="image-preview-box aspect-square" onclick="document.getElementById('consult-img-2').click()">
-                                    <img id="consult-preview-2" class="hidden" alt="">
-                                    <div id="consult-placeholder-2" class="w-full h-full flex items-center justify-center text-slate-300">
-                                        <i class="fas fa-camera"></i>
-                                    </div>
-                                    <div class="remove-btn" onclick="event.stopPropagation(); removeConsultImage(2)">
-                                        <i class="fas fa-times"></i>
-                                    </div>
+        async function applyVaccine(vaccineId) {
+            try {
+                const response = await fetch(`/api/vaccines/${vaccineId}/apply`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {

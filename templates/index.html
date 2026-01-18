@@ -1243,14 +1243,19 @@ Inicie SEMPRE com "URGÊNCIA: [NÍVEL]".`;
                         new Date(v.applied_date).toLocaleDateString('pt-BR') : 
                         new Date(v.scheduled_date).toLocaleDateString('pt-BR');
                     
+                    const statusBg = isApplied ? 'emerald' : 'amber';
+                    const borderColor = isApplied ? 'border-emerald-500' : 'border-amber-500';
+                    const statusText = isApplied ? 'Aplicada' : 'Pendente';
+                    const appliedText = isApplied ? 'Aplicada' : 'Agendada';
+                    
                     return `
-                        <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 ${isApplied ? 'border-emerald-500' : 'border-amber-500'}">
+                        <div class="neo-card p-6 bg-white flex justify-between items-center border-l-4 ${borderColor}">
                             <div>
                                 <h4 class="font-black">${v.name}</h4>
-                                <p class="text-sm text-slate-400 font-bold">${isApplied ? 'Aplicada' : 'Agendada'}: ${date}</p>
+                                <p class="text-sm text-slate-400 font-bold">${appliedText}: ${date}</p>
                             </div>
                             <div class="flex items-center gap-3">
-                                <span class="bg-${isApplied ? 'emerald' : 'amber'}-100 text-${isApplied ? 'emerald' : 'amber'}-600 px-3 py-1 rounded-full text-xs font-black uppercase">${isApplied ? 'Aplicada' : 'Pendente'}</span>
+                                <span class="bg-${statusBg}-100 text-${statusBg}-600 px-3 py-1 rounded-full text-xs font-black uppercase">${statusText}</span>
                                 ${!isApplied ? `<button onclick="applyVaccine(${v.id})" class="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-200"><i class="fas fa-check"></i></button>` : '<i class="fas fa-check-circle text-emerald-500"></i>'}
                             </div>
                         </div>

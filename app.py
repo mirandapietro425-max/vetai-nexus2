@@ -8,8 +8,9 @@ from sqlalchemy.orm import sessionmaker, scoped_session, relationship
 from datetime import datetime, timedelta
 from functools import wraps
 import hashlib
-import requests
 import stripe
+from google import genai
+from google.genai import types
 
 load_dotenv()
 
@@ -35,6 +36,9 @@ if STRIPE_SECRET_KEY:
     stripe.api_key = STRIPE_SECRET_KEY
 else:
     print("⚠️ AVISO: STRIPE_SECRET_KEY não configurada!")
+
+# Inicializar cliente Gemini
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 # Configuração PostgreSQL
 if not DATABASE_URL:
@@ -185,71 +189,52 @@ def get_user_info(user_id):
         }
     return None
 
-# ========== GEMINI API ==========
+# ========== GEMINI API - USANDO NOVA BIBLIOTECA google-genai ==========
 
 def call_gemini_api(prompt, images=None):
-    """Chamada para Gemini 2.0 Flash com suporte a múltiplas imagens"""
+    """Chamada para Gemini 2.0 Flash Experimental usando google-genai"""
     
-    print(f"📡 Chamando Gemini 2.0 Flash...")
+    print(f"📡 Chamando Gemini 2.0 Flash Experimental...")
     
-    if not GEMINI_API_KEY:
+    if not gemini_client:
         return "❌ GEMINI_API_KEY não configurada!"
 
-    model = "gemini-2.0-flash-exp"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
-    
-    parts = [{"text": prompt}]
-    
-    if images:
-        if not isinstance(images, list):
-            images = [images]
-        
-        for img in images:
-            if img:
-                if "," in img:
-                    mime_type = img.split(";")[0].split(":")[1]
-                    base64_data = img.split(",")[1]
-                else:
-                    mime_type = "image/jpeg"
-                    base64_data = img
-                
-                parts.append({
-                    "inlineData": {
-                        "mimeType": mime_type,
-                        "data": base64_data
-                    }
-                })
-    
-    payload = {
-        "contents": [{
-            "parts": parts
-        }],
-        "generationConfig": {
-            "temperature": 0.7,
-            "topK": 40,
-            "topP": 0.95,
-            "maxOutputTokens": 2048,
-        }
-    }
-
     try:
-        response = requests.post(url, headers={'Content-Type': 'application/json'}, json=payload, timeout=60)
+        # Preparar conteúdo
+        parts = [prompt]
         
-        if response.status_code == 200:
-            result = response.json()
-            text_result = result.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', "")
-            print(f"✅ Gemini respondeu com sucesso!")
-            return text_result
+        # Adicionar imagens se houver
+        if images:
+            if not isinstance(images, list):
+                images = [images]
+            
+            for img_base64 in images:
+                if img_base64:
+                    # Criar parte de imagem usando types.Part
+                    parts.append(
+                        types.Part.from_bytes(
+                            data=img_base64.encode() if isinstance(img_base64, str) else img_base64,
+                            mime_type="image/jpeg"
+                        )
+                    )
         
-        if response.status_code == 429:
-            return "⚠️ Limite de requisições atingido. Aguarde alguns segundos."
+        # Fazer chamada à API
+        response = gemini_client.models.generate_content(
+            model="gemini-2.0-flash-exp",
+            contents=parts,
+            config=types.GenerateContentConfig(
+                temperature=0.7,
+                top_k=40,
+                top_p=0.95,
+                max_output_tokens=8192
+            )
+        )
         
-        error_msg = response.json().get('error', {}).get('message', 'Erro desconhecido')
-        print(f"❌ Erro Gemini: {error_msg}")
-        return f"❌ Erro na API: {error_msg}"
+        print(f"✅ Gemini 2.0 Flash Exp respondeu com sucesso!")
+        return response.text
         
     except Exception as e:
-        print(f"❌ Exceção ao chamar Gemini: {str(e)}")
+        print(f"❌ Erro ao chamar Gemini: {str(e)}")
         return f"❌ Erro: {str(e)}"
 
 # ========== ROTAS DE AUTENTICAÇÃO ==========
@@ -294,7 +279,8 @@ def register():
                 "id": new_user.id,
                 "email": email,
                 "name": name,
-                "points": FREE_POINTS
+                "points": FREE_POINTS,
+                "is_premium": False
             }
         })
     except Exception as e:
@@ -645,12 +631,15 @@ def payment_cancel():
 
 @app.route('/api/test-gemini', methods=['GET'])
 def test_gemini():
-    result = call_gemini_api("Diga apenas: OK, estou funcionando!")
+    result = call_gemini_api("Diga apenas: OK, Gemini 2.0 Flash Experimental funcionando!")
     return jsonify({
         "test_result": result,
+        "model": "gemini-2.0-flash-exp",
+        "library": "google-genai",
         "api_key_configured": bool(GEMINI_API_KEY),
         "api_key_preview": GEMINI_API_KEY[:10] + "..." if GEMINI_API_KEY else "NOT SET",
-        "database": "PostgreSQL" if "postgresql" in DATABASE_URL else "SQLite"
+        "database": "PostgreSQL" if "postgresql" in DATABASE_URL else "SQLite",
+        "max_output_tokens": 8192
     })
 
 if __name__ == '__main__':
